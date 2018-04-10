@@ -28,8 +28,10 @@ namespace HidrowebWin.Forms
             bool isValid = Int32.TryParse(codigoEstacaoTxtBox.Text, out codigoEstacao);
             if (isValid)
             {
-                var listaEstacoes = await BuscaDadosHelper.BuscarNomeEstacao(codigoEstacao);
-                preListBox.Items.AddRange(listaEstacoes);
+                var estacao = await BuscaDadosHelper.BuscarEstacaoPluviometrica(codigoEstacao);
+
+                ListaEstacoesCache.Estacoes.Add(estacao);
+                preListBox.Items.Add($"{estacao.Codigo} {estacao.Nome}");
 
                 codigoEstacaoTxtBox.Text = string.Empty;
                 DefinirTextStatus(string.Empty, true, preListBox.Items.Count);

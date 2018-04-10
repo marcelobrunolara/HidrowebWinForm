@@ -1,7 +1,6 @@
 ﻿using Microsoft.Office.Interop.Excel;
 using System;
 using System.Linq;
-using static HidrowebWin.Forms.Data.HIDRODataSet;
 
 namespace HidrowebWin.Forms.ExcelManager
 {
@@ -49,7 +48,7 @@ namespace HidrowebWin.Forms.ExcelManager
             return workbook;
         }
 
-        public static _Workbook CriarAbaEstacao(_Workbook workbook, EstacaoRow estacaoRow)
+        public static _Workbook CriarAbaEstacao(_Workbook workbook)
         {
             //Select the sheet
             _Worksheet worksheet = workbook.Worksheets[1];

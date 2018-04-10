@@ -52,12 +52,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Data\HIDRODataSet.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>HIDRODataSet.xsd</DependentUpon>
-    </Compile>
-    <Compile Include="Data\RecuperarDataObject.cs" />
+    <Compile Include="Data\BuscaDadosHelper.cs" />
+    <Compile Include="Data\ListaEstacoesCache.cs" />
+    <Compile Include="Data\Models\EstacaoData.cs" />
     <Compile Include="ExcelManager\ExcelInteropHelper.cs" />
     <Compile Include="ExcelManager\TipoPlanilha.cs" />
     <Compile Include="Service References\ServiceANA\Reference.cs">
@@ -87,17 +84,6 @@
     <EmbeddedResource Include="TelaPrincipal.resx">
       <DependentUpon>TelaPrincipal.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="Data\HIDRODataSet.xsc">
-      <DependentUpon>HIDRODataSet.xsd</DependentUpon>
-    </None>
-    <None Include="Data\HIDRODataSet.xsd">
-      <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>HIDRODataSet.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Data\HIDRODataSet.xss">
-      <DependentUpon>HIDRODataSet.xsd</DependentUpon>
-    </None>
     <None Include="packages.config" />
     <None Include="Properties\DataSources\System.Data.DataSet.datasource" />
     <None Include="Properties\DataSources\System.Data.DataTable.datasource" />
@@ -137,6 +123,11 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="WinForms\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="HIDRO.mdb">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
