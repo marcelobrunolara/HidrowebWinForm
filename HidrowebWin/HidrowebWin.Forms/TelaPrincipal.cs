@@ -1,4 +1,6 @@
 ﻿using HidrowebWin.Forms.Data;
+using HidrowebWin.Forms.ExcelManager;
+using HidrowebWin.Forms.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -74,6 +76,17 @@ namespace HidrowebWin.Forms
             selectLstBox.Items.Remove(selectLstBox.SelectedItem);
         }
 
+        private async void btnGerarRelatorio_Click(object sender, EventArgs e)
+        {
+            string item = selectLstBox.Items[0].ToString();
+            var dadosEstacao = await ServiceANAHelper.DadosPluviometricosEstacao(2043003);
 
+            if (dadosEstacao.EhValido) {
+                var planilha = ExcelInteropHelper.CriarNovaPlanilhaPluviometrico("item");
+                planilha = ExcelInteropHelper.CriarAbaEstacao(planilha, ListaEstacoesCache.Estacoes.First(c => c.Codigo == 2043003));
+                planilha = ExcelInteropHelper.CriarAbaChuvas(planilha, dadosEstacao.Dados);
+            }
+
+        }
     }
 }

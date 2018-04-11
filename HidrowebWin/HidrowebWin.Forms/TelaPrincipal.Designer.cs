@@ -102,6 +102,7 @@
             this.btnGerarRelatorio.TabIndex = 1;
             this.btnGerarRelatorio.Text = "Gerar Relatório";
             this.btnGerarRelatorio.UseVisualStyleBackColor = true;
+            this.btnGerarRelatorio.Click += new System.EventHandler(this.btnGerarRelatorio_Click);
             // 
             // groupBox2
             // 

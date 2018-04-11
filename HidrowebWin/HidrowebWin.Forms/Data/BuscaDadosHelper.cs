@@ -67,6 +67,8 @@ namespace HidrowebWin.Forms.Data
             estacaoData.NomeSubBacia = dataTable.Rows[0].Field<string>("NomeSubBacia");
             estacaoData.NomeRio = dataTable.Rows[0].Field<string>("NomeRio");
             estacaoData.Operadora = dataTable.Rows[0].Field<string>("Operadora");
+            estacaoData.Municipio = dataTable.Rows[0].Field<string>("Municipio");
+            estacaoData.Estado = dataTable.Rows[0].Field<string>("Estado");
             estacaoData.Responsavel = dataTable.Rows[0].Field<string>("Responsavel");
             estacaoData.Latitude = dataTable.Rows[0].Field<double>("Latitude");
             estacaoData.Longitude = dataTable.Rows[0].Field<double>("Longitude");
