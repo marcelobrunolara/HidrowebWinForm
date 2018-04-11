@@ -53,8 +53,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\BuscaDadosHelper.cs" />
+    <Compile Include="Data\DataExtensionHelper.cs" />
     <Compile Include="Data\ListaEstacoesCache.cs" />
     <Compile Include="Data\Models\EstacaoData.cs" />
+    <Compile Include="Data\Models\SerieHistorica.cs" />
     <Compile Include="ExcelManager\ExcelInteropHelper.cs" />
     <Compile Include="ExcelManager\TipoPlanilha.cs" />
     <Compile Include="Service References\ServiceANA\Reference.cs">

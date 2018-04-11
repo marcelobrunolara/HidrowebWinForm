@@ -1,4 +1,5 @@
 ﻿using HidrowebWin.Forms.Data;
+using HidrowebWin.Forms.Data.Models;
 using HidrowebWin.Forms.ExcelManager;
 using HidrowebWin.Forms.Services;
 using System;
@@ -46,18 +47,6 @@ namespace HidrowebWin.Forms
             button1.Enabled = true;
         }
 
-        private void DefinirTextStatus(string texto, bool isValid, int regCount)
-        {
-            if (!isValid)
-                statusText.Text = "Entrada inválida.";
-            else if (texto == null)
-                statusText.Text = "Buscando...";
-            else if (regCount == 0)
-                statusText.Text = "Não encontrada.";
-            else
-                statusText.Text = string.Empty;
-        }
-
         private void addToSelectBtn_Click(object sender, EventArgs e)
         {
             if (preListBox.Items.Count == 0)
@@ -82,11 +71,39 @@ namespace HidrowebWin.Forms
             var dadosEstacao = await ServiceANAHelper.DadosPluviometricosEstacao(2043003);
 
             if (dadosEstacao.EhValido) {
-                var planilha = ExcelInteropHelper.CriarNovaPlanilhaPluviometrico("item");
-                planilha = ExcelInteropHelper.CriarAbaEstacao(planilha, ListaEstacoesCache.Estacoes.First(c => c.Codigo == 2043003));
-                planilha = ExcelInteropHelper.CriarAbaChuvas(planilha, dadosEstacao.Dados);
-            }
 
+                var dadosSerieHistorica = DataTableParaSerieHistorica(dadosEstacao.Dados);
+                var estacao = ListaEstacoesCache.Estacoes.First(c => c.Codigo == 2043003);
+
+                var planilha = ExcelInteropHelper.CriarNovaPlanilhaPluviometrico("item");
+                planilha = ExcelInteropHelper.CriarAbaEstacao(planilha, estacao);
+                planilha = ExcelInteropHelper.CriarAbaChuvas(planilha, dadosSerieHistorica, estacao);
+            }
         }
+
+        #region Métodos auxiliares
+
+        private void DefinirTextStatus(string texto, bool isValid, int regCount)
+        {
+            if (!isValid)
+                statusText.Text = "Entrada inválida.";
+            else if (texto == null)
+                statusText.Text = "Buscando...";
+            else if (regCount == 0)
+                statusText.Text = "Não encontrada.";
+            else
+                statusText.Text = string.Empty;
+        }
+
+        private IList<SerieHistorica> DataTableParaSerieHistorica(DataTable dataTable)
+        {
+            if(dataTable!=null)
+                return dataTable.DataTableToList<SerieHistorica>().ToList();
+
+            return null;
+        }
+
+        #endregion
+
     }
 }
