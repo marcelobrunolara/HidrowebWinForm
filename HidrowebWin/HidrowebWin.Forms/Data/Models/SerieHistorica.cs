@@ -96,6 +96,57 @@ namespace HidrowebWin.Forms.Data.Models
             }
         }
 
+        private string[] _arrayString=null;
+        public string[] ChuvasArray
+        {
+            get
+            {
+                if (_arrayString == null)
+                    return _inicializaArrayAuxiliar();
+
+                return _arrayString;
+            }
+        }
+
+        private string[] _inicializaArrayAuxiliar()
+        {
+            return new[] {
+                        "",
+                        Chuva01,
+                        Chuva02,
+                        Chuva03,
+                        Chuva04,
+                        Chuva05,
+                        Chuva06,
+                        Chuva07,
+                        Chuva08,
+                        Chuva09,
+                        Chuva10,
+                        Chuva11,
+                        Chuva12,
+                        Chuva13,
+                        Chuva14,
+                        Chuva15,
+                        Chuva16,
+                        Chuva17,
+                        Chuva18,
+                        Chuva19,
+                        Chuva20,
+                        Chuva21,
+                        Chuva22,
+                        Chuva23,
+                        Chuva24,
+                        Chuva25,
+                        Chuva26,
+                        Chuva27,
+                        Chuva28,
+                        Chuva29,
+                        Chuva30,
+                        Chuva31,
+            };
+        }
+
+
         #endregion
     }
 }

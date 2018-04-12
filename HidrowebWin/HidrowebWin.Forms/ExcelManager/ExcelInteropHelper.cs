@@ -11,7 +11,6 @@ namespace HidrowebWin.Forms.ExcelManager
 {
     public class ExcelInteropHelper
     {
-        #region [Abas pluviométrico]
 
         static string[] _nomeAbasPluviometrico = { "Estação", "Chuva", "Diária", "Resumo mês", "Resumo dias", "Resumo dias chuva", "Resumo dias falha" };
 
@@ -54,6 +53,7 @@ namespace HidrowebWin.Forms.ExcelManager
             return workbook;
         }
 
+        #region [Aba Estação]
         public static _Workbook CriarAbaEstacao(_Workbook workbook, EstacaoData estacao)
         {
             //Select the sheet
@@ -94,9 +94,9 @@ namespace HidrowebWin.Forms.ExcelManager
             worksheet.Cells[16, "C"] = DateTime.Now;
             worksheet.Cells[17, "C"] = $"De {estacao.Inicio.ToShortDateString()} a {estacao.Fim.ToShortDateString()}";
 
-            ((Range)worksheet.Range[worksheet.Cells[2, "B"], worksheet.Cells[17, "C"]]).ColumnWidth = 25;
-            ((Range)worksheet.Range[worksheet.Cells[2, "B"], worksheet.Cells[17, "C"]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
-            ((Range)worksheet.Range[worksheet.Cells[2, "B"], worksheet.Cells[17, "C"]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+            //((Range)worksheet.Range[worksheet.Cells[2, "B"], worksheet.Cells[17, "C"]]).ColumnWidth = 25;
+            //((Range)worksheet.Range[worksheet.Cells[2, "B"], worksheet.Cells[17, "C"]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
+            //((Range)worksheet.Range[worksheet.Cells[2, "B"], worksheet.Cells[17, "C"]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
             #endregion
 
             #region Legendas
@@ -147,43 +147,45 @@ namespace HidrowebWin.Forms.ExcelManager
             worksheet.Cells[14, "G"] = "Acumulado - ANA";
 
             ((Range)worksheet.Columns["F"]).ColumnWidth = 20;
-            ((Range)worksheet.Range[worksheet.Cells[2, "F"], worksheet.Cells[14, "F"]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
-            ((Range)worksheet.Range[worksheet.Cells[2, "F"], worksheet.Cells[17, "F"]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+            //((Range)worksheet.Range[worksheet.Cells[2, "F"], worksheet.Cells[14, "F"]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
+            //((Range)worksheet.Range[worksheet.Cells[2, "F"], worksheet.Cells[17, "F"]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
 
 
             #endregion
 
             return workbook;
-        }
+        } 
+        #endregion
 
+        #region [Aba Chuvas]
         public static _Workbook CriarAbaChuvas(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
         {
-
+            GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[2];
 
             //Criando primeira linha (títulos)
             worksheet.Cells[1, 2] = "Data";
-            for (int i=1; i<=31; i++)
+            for (int i = 1; i <= 31; i++)
             {
-                worksheet.Cells[1, 2+i] = "Chuva"+i.ToString("D2");
+                worksheet.Cells[1, 2 + i] = "Chuva" + i.ToString("D2");
             }
             worksheet.Cells[1, 34] = "Máxima";
             worksheet.Cells[1, 35] = "Consistido";
 
-            ((Range)worksheet.Range[worksheet.Cells[1, 1], worksheet.Cells[1, 35]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
-            ((Range)worksheet.Range[worksheet.Cells[1, 1], worksheet.Cells[1, 35]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
-            ((Range)worksheet.Range[worksheet.Cells[1, 1], worksheet.Cells[1, 35]]).Font.Bold = true;
+            //((Range)worksheet.Range[worksheet.Cells[1, 1], worksheet.Cells[1, 35]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
+            //((Range)worksheet.Range[worksheet.Cells[1, 1], worksheet.Cells[1, 35]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+            //((Range)worksheet.Range[worksheet.Cells[1, 1], worksheet.Cells[1, 35]]).Font.Bold = true;
 
             var dataIt = estacao.Inicio;
             int lineIndex = 2;
 
-            while (dataIt != estacao.Fim)//Cria todas as linhas até a data fim.
+            while (dataIt <= estacao.Fim)//Cria todas as linhas até a data fim.
             {
                 SerieHistorica linhaDados;
 
-                linhaDados = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia=="2"); //Buscar a priori, dados consistentes
+                linhaDados = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2"); //Buscar a priori, dados consistentes
 
-                if (linhaDados == null) 
+                if (linhaDados == null)
                     linhaDados = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "1"); //Buscar por dados brutos
 
                 if (linhaDados != null)
@@ -191,8 +193,8 @@ namespace HidrowebWin.Forms.ExcelManager
                     var consistencia = linhaDados.NivelConsistencia == "2";
                     MontarLinhaDadosChuvaDiaria(workbook, linhaDados, consistencia, lineIndex);
                 }
-                else 
-                    CriarLinhaInexistenteAbaChuvas(workbook,lineIndex, dataIt.ToShortDateString());
+                else
+                    CriarLinhaInexistenteAbaChuvas(workbook, lineIndex, dataIt.ToShortDateString());
 
                 dataIt = dataIt.AddMonths(1);
                 lineIndex++;
@@ -207,15 +209,15 @@ namespace HidrowebWin.Forms.ExcelManager
             //Status consistencia
             worksheet.Cells[lineIndex, 1] = "1";
             worksheet.Cells[lineIndex, 2] = dataString;
-            for(int i=1; i<=31; i++)
+            for (int i = 1; i <= 31; i++)
             {
                 ((Range)worksheet.Cells[lineIndex, 2 + i]).Interior.Color = XlRgbColor.rgbRed;
             }
             worksheet.Cells[lineIndex, 35] = "Não";
 
             ((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 35]]).Font.Color = XlRgbColor.rgbBlue;
-            ((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 35]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
-            ((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 35]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+            //((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 35]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
+            //((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 35]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
         }
 
         private static void MontarLinhaDadosChuvaDiaria(_Workbook workbook, SerieHistorica linhaDados, bool valid, int lineIndex)
@@ -226,22 +228,25 @@ namespace HidrowebWin.Forms.ExcelManager
             worksheet.Cells[lineIndex, 1] = linhaDados.NivelConsistencia;
             //Data chuva
             worksheet.Cells[lineIndex, 2] = linhaDados.Data.ToShortDateString(); ;
-            ((Range)worksheet.Cells[lineIndex,2]).Font.Bold = true;
+            ((Range)worksheet.Cells[lineIndex, 2]).Font.Bold = true;
             ((Range)worksheet.Cells[lineIndex, 2]).ColumnWidth = 15;
 
             int i = 1;
-            while (i <= 31) { 
+            while (i <= 31)
+            {
                 try
                 {
 
-                    PropertyInfo propertyInfo = linhaDados.GetType().GetProperty("Chuva"+i.ToString("D2"));
-                    string medidaChuva = propertyInfo.GetValue(linhaDados).ToString();
+
+                    string medidaChuva = linhaDados.ChuvasArray[i];
 
                     worksheet.Cells[lineIndex, 2 + i] = medidaChuva;
 
-                    if (string.IsNullOrEmpty(medidaChuva) && valid)
+                    if (string.IsNullOrEmpty(medidaChuva))
                         ((Range)worksheet.Cells[lineIndex, 2 + i]).Interior.Color = XlRgbColor.rgbOrange;//Se os dados estiverem em branco
-                        
+                    if(!valid)
+                        ((Range)worksheet.Cells[lineIndex, 2 + i]).Font.Color = XlRgbColor.rgbBlue;//Se os dados estiverem em branco
+
                     i++;
                 }
                 catch
@@ -255,10 +260,10 @@ namespace HidrowebWin.Forms.ExcelManager
             worksheet.Cells[lineIndex, 2] = linhaDados.Data.ToShortDateString();
 
             //Maxima
-            worksheet.Cells[lineIndex,34] = linhaDados.Maxima;
+            worksheet.Cells[lineIndex, 34] = linhaDados.Maxima;
             switch (linhaDados.MaximaStatus)
             {
-                case "1":  break; //Estimado
+                case "1": break; //Estimado
                 case "2": ((Range)worksheet.Cells[lineIndex, 34]).Font.Color = XlRgbColor.rgbRed; break; //Estimado
                 case "3": ((Range)worksheet.Cells[lineIndex, 34]).Font.Color = XlRgbColor.rgbPink; break; //Duvidoso
                 case "4": ((Range)worksheet.Cells[lineIndex, 34]).Interior.Color = XlRgbColor.rgbDarkGreen; break; //Acumulado
@@ -273,10 +278,115 @@ namespace HidrowebWin.Forms.ExcelManager
             if (!valid) //dados brutos ou invalidos
                 ((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 33]]).Font.Color = XlRgbColor.rgbBlue;
 
-            ((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 35]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
-            ((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 35]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+            //((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 35]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
+           // ((Range)worksheet.Range[worksheet.Cells[lineIndex, 1], worksheet.Cells[lineIndex, 35]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+        }
+        #endregion
+
+        #region [Aba Diária]
+        public static _Workbook CriarAbaDiaria(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        {
+            GC.Collect();
+            _Worksheet worksheet = workbook.Worksheets[3];
+
+            //Criando primeira Coluna
+            worksheet.Cells[2, 2] = "Data";
+            worksheet.Cells[2, 3] = "Chuva";
+
+            //((Range)worksheet.Range[worksheet.Cells[2, 2], worksheet.Cells[2, 3]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
+            //((Range)worksheet.Range[worksheet.Cells[2, 2], worksheet.Cells[2, 3]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+            ((Range)worksheet.Range[worksheet.Cells[2, 2], worksheet.Cells[2, 3]]).Font.Bold = true;
+
+            var dataIt = estacao.Inicio;
+
+            int ultimaLinha = 3;
+            while (dataIt <= estacao.Fim)//Cria os dados em coluna até o fim
+            {
+                SerieHistorica linhaDados;
+
+                linhaDados = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2"); //Buscar a priori, dados consistentes
+
+                if (linhaDados == null)
+                    linhaDados = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "1"); //Buscar por dados brutos
+
+                if (linhaDados != null)
+                {
+                    var consistencia = linhaDados.NivelConsistencia == "2";
+                    ultimaLinha = MontarColunaDiaria(workbook, linhaDados, consistencia, ultimaLinha);
+                }
+                else
+                    CriarColunaInexistenteAbaDiaria(workbook, ultimaLinha, dataIt);
+
+                if (dataIt.Month != 12)
+                    dataIt = dataIt.AddMonths(1);
+            }
+
+            return workbook;
         }
 
+        private static int CriarColunaInexistenteAbaDiaria(_Workbook workbook, int ultimaLinha, DateTime data)
+        {
+            _Worksheet worksheet = workbook.Worksheets[3];
+            //Status consistencia
+            int i = 1;
+            var daysInMonth = DateTime.DaysInMonth(data.Year, data.Month);
+            var initialDate = data;
+            while (i<= daysInMonth) {
+
+                worksheet.Cells[ultimaLinha, 2] = initialDate;
+
+                ((Range)worksheet.Cells[ultimaLinha, 3]).Interior.Color = XlRgbColor.rgbRed;
+
+                ((Range)worksheet.Range[worksheet.Cells[ultimaLinha, 2], worksheet.Cells[ultimaLinha, 3]]).Font.Color = XlRgbColor.rgbBlue;
+               // ((Range)worksheet.Range[worksheet.Cells[ultimaLinha, 2], worksheet.Cells[ultimaLinha, 3]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
+               // ((Range)worksheet.Range[worksheet.Cells[ultimaLinha, 2], worksheet.Cells[ultimaLinha, 3]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+
+                initialDate = initialDate.AddDays(1);
+                ultimaLinha++;
+            }
+
+            return ultimaLinha;
+        }
+
+        private static int MontarColunaDiaria(_Workbook workbook, SerieHistorica linhaDados, bool consistencia, int ultimaLinha)
+        {
+            _Worksheet worksheet = workbook.Worksheets[3];
+            int i = 1;
+            var daysInMonth = DateTime.DaysInMonth(linhaDados.Data.Year, linhaDados.Data.Month);
+            var dateInitial = linhaDados.Data;
+
+            while (i <= daysInMonth)
+            {
+                try
+                {
+                    //Data chuva
+                    worksheet.Cells[ultimaLinha, 2] = dateInitial.ToShortDateString();
+                    ((Range)worksheet.Cells[ultimaLinha, 2]).ColumnWidth = 15;
+
+                    string medidaChuva = linhaDados.ChuvasArray[i];
+
+                    worksheet.Cells[ultimaLinha, 3] = medidaChuva;
+
+                    if (string.IsNullOrEmpty(medidaChuva))
+                        ((Range)worksheet.Cells[ultimaLinha, 3]).Interior.Color = XlRgbColor.rgbOrange;//Se os dados estiverem em branco
+                    if(!consistencia)
+                        ((Range)worksheet.Range[worksheet.Cells[2, 3], worksheet.Cells[2, 3]]).Font.Color = XlRgbColor.rgbBlue; //Se nao forem dados consistentes
+
+                    //((Range)worksheet.Range[worksheet.Cells[ultimaLinha, 2], worksheet.Cells[ultimaLinha, 3]]).HorizontalAlignment = XlHAlign.xlHAlignCenter;
+                    //((Range)worksheet.Range[worksheet.Cells[ultimaLinha, 2], worksheet.Cells[ultimaLinha, 3]]).Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+
+                    dateInitial = dateInitial.AddDays(1);
+                    ultimaLinha++;
+                    i++;
+                }
+                catch
+                {
+                }
+            }
+
+            return ultimaLinha;
+        }
         #endregion
+
     }
 }
