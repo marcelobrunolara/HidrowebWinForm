@@ -239,7 +239,75 @@ namespace HidrowebWin.Forms.ExcelManager
 
         #endregion
 
+        #region Aba resumo dia
 
+        public static _Workbook CriarAbaResumoDia(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        {
+            GC.Collect();
+            _Worksheet worksheet = workbook.Worksheets[4];
+
+            DateTime dataIt = estacao.Inicio;
+
+            int ultimaLinha = 2;
+
+            SerieHistorica linhaEstacao = new SerieHistorica();
+
+            while (dataIt <= estacao.Fim)//Cria todas as linhas até a data fim.
+            {
+                var linhas = DateTime.DaysInMonth(dataIt.Year, dataIt.Month) + 1; // Dias no mes mais linha referente ao ano.
+
+                object[,] dados = new object[linhas, 25];
+
+                for (int i = 0; i < 13; i++)
+                {
+
+                    linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
+                    if (linhaEstacao == null)
+                        linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "1");
+
+                    //itera pelos dias
+                    for (int j = 0; j < linhas; j++)
+                    {
+                        if (i == 0) //Começo de novo ano - dados
+                        {
+                            dados[j, i] = j == 0 ? dataIt.Year : j;
+                        }
+                        else
+                        {
+                            if (j == 0)
+                            {
+                                dados[j, i] = "-";
+                            }
+                            else
+                            {
+                                if (linhaEstacao == null)
+                                    dados[j, i + 12] = "i";
+                                else
+                                {
+                                    dados[j, i] = linhaEstacao.ChuvasArray[j];
+                                    dados[j, i + 12] = string.IsNullOrEmpty(linhaEstacao.ChuvasArray[j])?"b":string.Empty;
+                                }
+                            }
+                        }
+                    }
+
+                    dataIt = dataIt.AddMonths(1);
+                }
+
+                ultimaLinha = linhas;
+            }
+
+            //Range range = worksheet.Cells[3, 2];
+            //range = range.Resize[yearsQuantity, 28];
+            //range.Value = dados;
+
+            //Range range2 = worksheet.Cells[3, 2];
+            //range = range.Resize[yearsQuantity, 14];
+            //range.Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+            return workbook;
+        }
+
+        #endregion
 
     }
 }
