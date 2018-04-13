@@ -78,7 +78,7 @@ namespace HidrowebWin.Forms
                 var planilha = ExcelInteropHelper.CriarNovaPlanilhaPluviometrico("item");
                 planilha = ExcelInteropHelper.CriarAbaEstacao(planilha, estacao);
                 planilha = ExcelInteropHelper.CriarAbaChuvas(planilha, dadosSerieHistorica, estacao);
-                planilha = ExcelInteropHelper.CriarAbaDiaria(planilha, dadosSerieHistorica, estacao);
+                //planilha = ExcelInteropHelper.CriarAbaDiaria(planilha, dadosSerieHistorica, estacao);
             }
         }
 
