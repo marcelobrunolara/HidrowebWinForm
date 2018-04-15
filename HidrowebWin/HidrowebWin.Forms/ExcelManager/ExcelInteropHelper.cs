@@ -311,5 +311,224 @@ namespace HidrowebWin.Forms.ExcelManager
 
         #endregion
 
+        #region Aba resumo dias chuva
+        public static _Workbook CriarAbaResumoDiasChuva(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        {
+            GC.Collect();
+            _Worksheet worksheet = workbook.Worksheets[6];
+
+            DateTime dataIt = estacao.Inicio;
+            SerieHistorica linhaEstacao = new SerieHistorica();
+
+            int totalAnos = estacao.Fim.Year - dataIt.Year; // Dias no mes mais linha referente ao ano.
+            int somatorioDias;
+            bool linhaInvalida;
+
+            object[,] dados = new object[totalAnos+2, 27];
+
+            int totalLinhas = totalAnos + 2;
+
+            for (int linha=0; linha< totalLinhas-1; linha++ )
+            {
+                somatorioDias = 0;
+                linhaInvalida = false;
+
+                for (int coluna=0; coluna<14; coluna++)
+                {
+                    //Somatorio Total
+                    if (coluna == 13)
+                    {
+                        dados[linha, coluna] = linhaInvalida ? string.Empty : somatorioDias.ToString();
+                        dados[linha, coluna + 13] = linhaInvalida ? "i" : string.Empty;
+                    }
+                    else
+                    {
+
+                        linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
+                        if (linhaEstacao == null)
+                            linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt);
+
+                        if (coluna == 0)
+                        {
+                            dados[linha, coluna] = dataIt.Year;
+                        }
+                        else if (linhaEstacao == null)
+                        {
+                            dados[linha, coluna + 13] = "i";
+                            linhaInvalida = true;
+                        }
+                        else if (string.IsNullOrEmpty(linhaEstacao.NumDiasDeChuva) && string.IsNullOrEmpty(linhaEstacao.Total))
+                        {
+                            dados[linha, coluna + 13] = "a";
+                            linhaInvalida = true;
+                        }
+                        else if (string.IsNullOrEmpty(linhaEstacao.NumDiasDeChuva))
+                        {
+                            dados[linha, coluna + 13] = "b";
+                            linhaInvalida = true;
+                        }
+                        else
+                        {
+                            if(linhaEstacao.NivelConsistencia=="1")
+                                dados[linha, coluna + 13] = "fa";
+
+                            dados[linha, coluna] = linhaEstacao.NumDiasDeChuva;
+                            somatorioDias += Convert.ToInt32(linhaEstacao.NumDiasDeChuva);
+                        }
+                        if (coluna != 0)
+                            dataIt = dataIt.AddMonths(1);
+                    }
+                }
+            }
+
+            dados[totalLinhas-1, 0] = "Médias";
+
+            for(int linhaMedia =1; linhaMedia <= 13; linhaMedia++)
+            {
+                int valor = 0;
+                int quantidadeValores = 0;
+                double somatorio = 0.0;
+                double media = 0.0;
+
+                for (int colunaSomatorio=0; colunaSomatorio< totalLinhas-1; colunaSomatorio++)
+                {
+                    valor = !(dados[colunaSomatorio, linhaMedia] == string.Empty) ? Convert.ToInt32(dados[colunaSomatorio, linhaMedia]) : 0;
+                    somatorio += valor;
+                    if(valor!=0)
+                        quantidadeValores++;
+                }
+                media = somatorio / quantidadeValores;
+                dados[totalLinhas -1, linhaMedia] = media;
+            }
+
+
+            //Imprime os dados
+            Range range = worksheet.Cells[3, 2];
+            range = range.Resize[totalLinhas, 27];
+            range.Value = dados;
+
+            range = worksheet.Cells[3, 2];
+            range = range.Resize[totalLinhas, 14];
+            range.Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+
+
+            return workbook;
+        }
+
+        #endregion
+
+        #region Aba resumo dias chuva
+        public static _Workbook CriarAbaResumoDiasFalha(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        {
+            GC.Collect();
+            _Worksheet worksheet = workbook.Worksheets[7];
+
+            DateTime dataIt = estacao.Inicio;
+            SerieHistorica linhaEstacao = new SerieHistorica();
+
+            int totalAnos = estacao.Fim.Year - dataIt.Year; // Dias no mes mais linha referente ao ano.
+            int somatorioDias;
+
+            object[,] dados = new object[totalAnos + 2, 27];
+
+            int totalLinhas = totalAnos + 2;
+
+            for (int linha = 0; linha < totalLinhas - 1; linha++)
+            {
+                somatorioDias = 0;
+
+                for (int coluna = 0; coluna < 14; coluna++)
+                {
+                    //Somatorio Total
+                    if (coluna == 13)
+                    {
+                        dados[linha, coluna] = somatorioDias;
+                    }
+                    else
+                    {
+                        int diasMes = DateTime.DaysInMonth(dataIt.Year, dataIt.Month);
+
+                        linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
+                        if (linhaEstacao == null)
+                            linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt);
+
+                        if (coluna == 0)
+                        {
+                            dados[linha, coluna] = dataIt.Year;
+                        }
+                        else if (linhaEstacao == null)
+                        {
+                            dados[linha, coluna] = diasMes;
+                            dados[linha, coluna + 13] = "i";
+                        }
+                        else 
+                        {
+                            int diasFalha = linhaEstacao.StatusChuvasArray.Where(c => c == "0").Count();
+                            int diasChuva = linhaEstacao.StatusChuvasArray.Where(c => c == "1").Count();
+
+                            if (diasMes == diasChuva)
+                                dados[linha, coluna] = 0;
+                            else if (diasMes == diasFalha)
+                            {
+                                dados[linha, coluna] = diasFalha;
+                                dados[linha, coluna + 13] = "i";
+                            }
+                            else if(diasMes!=diasFalha)
+                            {
+                                if (diasMes > diasFalha)
+                                {
+                                    dados[linha, coluna] = diasMes - diasChuva;
+                                    dados[linha, coluna + 13] = "a";
+                                }else
+                                {
+                                    dados[linha, coluna] = diasMes;
+                                    dados[linha, coluna + 13] = "i";
+                                }
+                          }
+
+                            somatorioDias += diasFalha;
+                        }
+                        if (coluna != 0)
+                            dataIt = dataIt.AddMonths(1);
+                    }
+                }
+            }
+
+            dados[totalLinhas - 1, 0] = "Médias";
+
+            for (int linhaMedia = 1; linhaMedia <= 13; linhaMedia++)
+            {
+                int valor = 0;
+                int quantidadeValores = 0;
+                double somatorio = 0.0;
+                double media = 0.0;
+
+                for (int colunaSomatorio = 0; colunaSomatorio < totalLinhas - 1; colunaSomatorio++)
+                {
+                    valor = !(dados[colunaSomatorio, linhaMedia] == string.Empty) ? Convert.ToInt32(dados[colunaSomatorio, linhaMedia]) : 0;
+                    somatorio += valor;
+                    if (valor != 0)
+                        quantidadeValores++;
+                }
+                media = somatorio / quantidadeValores;
+                dados[totalLinhas - 1, linhaMedia] = media;
+            }
+
+
+            //Imprime os dados
+            Range range = worksheet.Cells[3, 2];
+            range = range.Resize[totalLinhas, 27];
+            range.Value = dados;
+
+            range = worksheet.Cells[3, 2];
+            range = range.Resize[totalLinhas, 14];
+            range.Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+
+
+            return workbook;
+        }
+
+        #endregion
+
     }
 }

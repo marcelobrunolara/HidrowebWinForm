@@ -96,7 +96,8 @@ namespace HidrowebWin.Forms.Data.Models
             }
         }
 
-        private string[] _arrayString=null;
+        #region ChuvasArray
+        private string[] _arrayString = null;
         public string[] ChuvasArray
         {
             get
@@ -145,6 +146,59 @@ namespace HidrowebWin.Forms.Data.Models
                         Chuva31,
             };
         }
+        #endregion
+
+        #region StatusChuvasArray
+        private string[] _arrayStatusString = null;
+        public string[] StatusChuvasArray
+        {
+            get
+            {
+                if (_arrayStatusString == null)
+                    return _inicializaArrayStatusAuxiliar();
+
+                return _arrayStatusString;
+            }
+        }
+
+        private string[] _inicializaArrayStatusAuxiliar()
+        {
+            return new[] {
+                        "",
+                        Chuva01Status,
+                        Chuva02Status,
+                        Chuva03Status,
+                        Chuva04Status,
+                        Chuva05Status,
+                        Chuva06Status,
+                        Chuva07Status,
+                        Chuva08Status,
+                        Chuva09Status,
+                        Chuva10Status,
+                        Chuva11Status,
+                        Chuva12Status,
+                        Chuva13Status,
+                        Chuva14Status,
+                        Chuva15Status,
+                        Chuva16Status,
+                        Chuva17Status,
+                        Chuva18Status,
+                        Chuva19Status,
+                        Chuva20Status,
+                        Chuva21Status,
+                        Chuva22Status,
+                        Chuva23Status,
+                        Chuva24Status,
+                        Chuva25Status,
+                        Chuva26Status,
+                        Chuva27Status,
+                        Chuva28Status,
+                        Chuva29Status,
+                        Chuva30Status,
+                        Chuva31Status,
+            };
+        }
+        #endregion
 
 
         #endregion

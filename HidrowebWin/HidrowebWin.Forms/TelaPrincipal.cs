@@ -80,6 +80,8 @@ namespace HidrowebWin.Forms
                 planilha = ExcelInteropHelper.CriarAbaChuvas(planilha, dadosSerieHistorica, estacao);
                 planilha = ExcelInteropHelper.CriarAbaResumo(planilha, dadosSerieHistorica, estacao);
                 planilha = ExcelInteropHelper.CriarAbaResumoDia(planilha, dadosSerieHistorica, estacao);
+                planilha = ExcelInteropHelper.CriarAbaResumoDiasChuva(planilha, dadosSerieHistorica, estacao);
+                planilha = ExcelInteropHelper.CriarAbaResumoDiasFalha(planilha, dadosSerieHistorica, estacao);
             }
         }
 
