@@ -244,66 +244,68 @@ namespace HidrowebWin.Forms.ExcelManager
         public static _Workbook CriarAbaResumoDia(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
         {
             GC.Collect();
-            _Worksheet worksheet = workbook.Worksheets[4];
+            _Worksheet worksheet = workbook.Worksheets[5];
 
             DateTime dataIt = estacao.Inicio;
 
-            int ultimaLinha = 2;
+            int linhasRange = 32;
+            int anoIteracao = 0;
+            int linhaInicio = 3;
 
             SerieHistorica linhaEstacao = new SerieHistorica();
 
             while (dataIt <= estacao.Fim)//Cria todas as linhas até a data fim.
             {
-                var linhas = DateTime.DaysInMonth(dataIt.Year, dataIt.Month) + 1; // Dias no mes mais linha referente ao ano.
+                object[,] dados = new object[32, 25];
 
-                object[,] dados = new object[linhas, 25];
-
-                for (int i = 0; i < 13; i++)
+                for (int i = 0; i <= 12; i++) //iteração por mes
                 {
+                    var diasNoMes = DateTime.DaysInMonth(dataIt.Year, dataIt.Month); // Dias no mes mais linha referente ao ano.
 
                     linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
                     if (linhaEstacao == null)
                         linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "1");
 
-                    //itera pelos dias
-                    for (int j = 0; j < linhas; j++)
+                    //preenche a coluna
+                    for (int index = 0; index <= 31; index++) // iteracao por dia
                     {
-                        if (i == 0) //Começo de novo ano - dados
-                        {
-                            dados[j, i] = j == 0 ? dataIt.Year : j;
-                        }
-                        else
-                        {
-                            if (j == 0)
-                            {
-                                dados[j, i] = "-";
-                            }
-                            else
-                            {
-                                if (linhaEstacao == null)
-                                    dados[j, i + 12] = "i";
-                                else
-                                {
-                                    dados[j, i] = linhaEstacao.ChuvasArray[j];
-                                    dados[j, i + 12] = string.IsNullOrEmpty(linhaEstacao.ChuvasArray[j])?"b":string.Empty;
-                                }
-                            }
-                        }
-                    }
+                        if (i == 0 && index == 0) //Escreve o Ano
+                            dados[index, i] = dataIt.Year;
+                        if (i != 0 && index == 0) //Escreve o "-"
+                            dados[index, i] = "-";
+                        if (i == 0 && index != 0) //Escreve o dia do mes
+                            dados[index, i] = index;
 
-                    dataIt = dataIt.AddMonths(1);
+                        if (i != 0 && index != 0) // Escreve dados da chuva para o dia
+                        {
+                            if (linhaEstacao == null) // nao existe dados para este mes
+                                dados[index, i + 12] = "i";
+                            else if (string.IsNullOrEmpty(linhaEstacao.ChuvasArray[index]) && index > diasNoMes)
+                                dados[index, i] = "-";
+                            else if (string.IsNullOrEmpty(linhaEstacao.ChuvasArray[index]))
+                                dados[index, i + 12] = "b";
+                            else
+                                dados[index, i] = linhaEstacao.ChuvasArray[index];
+                        }
+
+                    }
+                    if(i!=0)
+                        dataIt = dataIt.AddMonths(1);
                 }
 
-                ultimaLinha = linhas;
+                linhaInicio = 3 + (linhasRange * anoIteracao);
+
+                //Imprime os dados
+                Range range = worksheet.Cells[linhaInicio, 2];
+                range = range.Resize[linhasRange, 25];
+                range.Value = dados;
+
+                //Desenha as linhas de borda
+                range = range.Resize[linhasRange, 13];
+                range.Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
+
+                anoIteracao++;
             }
-
-            //Range range = worksheet.Cells[3, 2];
-            //range = range.Resize[yearsQuantity, 28];
-            //range.Value = dados;
-
-            //Range range2 = worksheet.Cells[3, 2];
-            //range = range.Resize[yearsQuantity, 14];
-            //range.Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
             return workbook;
         }
 
