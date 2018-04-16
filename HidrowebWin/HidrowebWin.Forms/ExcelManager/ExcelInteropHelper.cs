@@ -11,17 +11,16 @@ namespace HidrowebWin.Forms.ExcelManager
 {
     public class ExcelInteropHelper
     {
+        private static Application app;
 
         public static _Workbook CriarNovaPlanilhaPluviometrico(string filename)
         {
 
             // creating Excel Application
-            _Application app = new Microsoft.Office.Interop.Excel.Application();
+            app = new Microsoft.Office.Interop.Excel.Application();
             // creating new WorkBook within Excel application
 
-            string path = System.Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-
-            _Workbook workbook = app.Workbooks.Open(path + "/template_plu.xlsx");
+            _Workbook workbook = app.Workbooks.Open(Environment.CurrentDirectory+"/template_plu.xlsx");
 
             // creating new Excelsheet in workbook
             Microsoft.Office.Interop.Excel._Worksheet worksheet = null;
@@ -33,7 +32,9 @@ namespace HidrowebWin.Forms.ExcelManager
             xlSheets = workbook.Sheets as Sheets;
 
             // see the excel sheet behind the program
-            app.Visible = true;
+            app.Visible = false;
+            app.ScreenUpdating = false;
+            app.Calculation = Microsoft.Office.Interop.Excel.XlCalculation.xlCalculationManual;
 
             return workbook;
         }
@@ -61,7 +62,7 @@ namespace HidrowebWin.Forms.ExcelManager
             dadosEstacao[12, 0] = estacao.Altitude;
             dadosEstacao[13, 0] = estacao.AreaDrenagem;
             dadosEstacao[14, 0] = DateTime.Now;
-            dadosEstacao[15, 0] = $"De {estacao.Inicio.Date} a {estacao.Fim.Date}";
+            dadosEstacao[15, 0] = $"De {estacao.Inicio.Date.ToString("dd/MM/yyyy")} a {estacao.Fim.Date.ToString("dd/MM/yyyy")}";
 
 
             Range range = worksheet.Cells[2, 3];
@@ -179,6 +180,11 @@ namespace HidrowebWin.Forms.ExcelManager
             range.Value = dados;
 
             return workbook;
+        }
+
+        public static void FecharAplicacao()
+        {
+            app.Quit();
         }
         #endregion
 
@@ -343,6 +349,7 @@ namespace HidrowebWin.Forms.ExcelManager
                     }
                     else
                     {
+                        int diasMes = DateTime.DaysInMonth(dataIt.Year, dataIt.Month);
 
                         linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
                         if (linhaEstacao == null)
@@ -357,23 +364,33 @@ namespace HidrowebWin.Forms.ExcelManager
                             dados[linha, coluna + 13] = "i";
                             linhaInvalida = true;
                         }
-                        else if (string.IsNullOrEmpty(linhaEstacao.NumDiasDeChuva) && string.IsNullOrEmpty(linhaEstacao.Total))
-                        {
-                            dados[linha, coluna + 13] = "a";
-                            linhaInvalida = true;
-                        }
-                        else if (string.IsNullOrEmpty(linhaEstacao.NumDiasDeChuva))
-                        {
-                            dados[linha, coluna + 13] = "b";
-                            linhaInvalida = true;
-                        }
                         else
                         {
-                            if(linhaEstacao.NivelConsistencia=="1")
-                                dados[linha, coluna + 13] = "fa";
+                            int diasFalha = linhaEstacao.StatusChuvasArray.Where(c => c == "0").Count();
+                            int diasCaptacao = linhaEstacao.StatusChuvasArray.Where(c => c == "1").Count();
 
-                            dados[linha, coluna] = linhaEstacao.NumDiasDeChuva;
-                            somatorioDias += Convert.ToInt32(linhaEstacao.NumDiasDeChuva);
+                            if (string.IsNullOrEmpty(linhaEstacao.NumDiasDeChuva)) //Informação não exibida na planilha do Hidroweb
+                            {
+                                if (diasCaptacao == diasMes)
+                                {
+                                    dados[linha, coluna] = 0;
+                                }
+                                else if (diasCaptacao == 0)
+                                {
+                                    dados[linha, coluna + 13] = "i";
+                                    linhaInvalida = true;
+                                }
+                                else if (diasMes > diasCaptacao)
+                                {
+                                    dados[linha, coluna + 13] = "a";
+                                    linhaInvalida = true;
+                                }
+                            }else
+                            {
+                                dados[linha, coluna] = linhaEstacao.NumDiasDeChuva;
+                                somatorioDias += Convert.ToInt32(linhaEstacao.NumDiasDeChuva);
+                            }
+
                         }
                         if (coluna != 0)
                             dataIt = dataIt.AddMonths(1);
@@ -472,6 +489,7 @@ namespace HidrowebWin.Forms.ExcelManager
                             {
                                 dados[linha, coluna] = diasFalha;
                                 dados[linha, coluna + 13] = "i";
+                                somatorioDias += diasFalha;
                             }
                             else if(diasMes!=diasFalha)
                             {
@@ -479,14 +497,16 @@ namespace HidrowebWin.Forms.ExcelManager
                                 {
                                     dados[linha, coluna] = diasMes - diasChuva;
                                     dados[linha, coluna + 13] = "a";
-                                }else
+                                    somatorioDias += diasMes - diasChuva;
+                                }
+                                else
                                 {
+                                    somatorioDias += diasMes;
                                     dados[linha, coluna] = diasMes;
                                     dados[linha, coluna + 13] = "i";
                                 }
                           }
 
-                            somatorioDias += diasFalha;
                         }
                         if (coluna != 0)
                             dataIt = dataIt.AddMonths(1);
@@ -526,6 +546,11 @@ namespace HidrowebWin.Forms.ExcelManager
 
 
             return workbook;
+        }
+
+        public static void FinalizarPlanilha()
+        {
+            app.Calculation = Microsoft.Office.Interop.Excel.XlCalculation.xlCalculationManual;
         }
 
         #endregion

@@ -61,6 +61,8 @@ namespace HidrowebWin.Forms.Data
             DataTable dataTable = await ExecuteAsyncQuery(string.Format(_queryDadosEstacaoPluviometrica, codEstacao));
 
             EstacaoData estacaoData = new EstacaoData();
+
+            if (dataTable.Rows.Count > 0) { 
             estacaoData.Codigo = dataTable.Rows[0].Field<int>("Codigo");
             estacaoData.Nome = dataTable.Rows[0].Field<string>("Nome");
             estacaoData.NomeBacia = dataTable.Rows[0].Field<string>("NomeBacia");
@@ -76,6 +78,7 @@ namespace HidrowebWin.Forms.Data
             estacaoData.AreaDrenagem = dataTable.Rows[0].Field<string>("AreaDrenagem");
             estacaoData.Inicio = dataTable.Rows[0].Field<DateTime>("Inicio");
             estacaoData.Fim = dataTable.Rows[0].Field<DateTime>("Fim");
+            }
 
             return await Task.FromResult(estacaoData);
         }
