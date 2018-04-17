@@ -20,8 +20,8 @@ namespace HidrowebWin.Forms.Data.Models
         public string Estado { get; set; }
         public string Municipio { get; set; }
         public string AreaDrenagem { get; set; }
-        public DateTime Inicio { get; set; }
-        public DateTime Fim { get; set; }
+        public DateTime? Inicio { get; set; }
+        public DateTime? Fim { get; set; }
         public string Responsavel { get; set; }
         public string Operadora { get; set; }
     }

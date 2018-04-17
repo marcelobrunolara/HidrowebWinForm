@@ -76,8 +76,8 @@ namespace HidrowebWin.Forms.Data
             estacaoData.Longitude = dataTable.Rows[0].Field<double>("Longitude");
             estacaoData.Altitude = dataTable.Rows[0].Field<double>("Altitude");
             estacaoData.AreaDrenagem = dataTable.Rows[0].Field<string>("AreaDrenagem");
-            estacaoData.Inicio = dataTable.Rows[0].Field<DateTime>("Inicio");
-            estacaoData.Fim = dataTable.Rows[0].Field<DateTime>("Fim");
+            estacaoData.Inicio = dataTable.Rows[0].Field<DateTime?>("Inicio");
+            estacaoData.Fim = dataTable.Rows[0].Field<DateTime?>("Fim");
             }
 
             return await Task.FromResult(estacaoData);

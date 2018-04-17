@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using DataTables = System.Data.DataTable;
 
 namespace HidrowebWin.Forms.ExcelManager
@@ -33,17 +34,18 @@ namespace HidrowebWin.Forms.ExcelManager
 
             // see the excel sheet behind the program
             app.Visible = false;
-            app.ScreenUpdating = false;
-            app.Calculation = Microsoft.Office.Interop.Excel.XlCalculation.xlCalculationManual;
 
             return workbook;
         }
 
         #region [Aba Estação]
-        public static _Workbook CriarAbaEstacao(_Workbook workbook, EstacaoData estacao)
+        public static _Workbook CriarAbaEstacao(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
         {
             //Select the sheet
             _Worksheet worksheet = workbook.Worksheets[1];
+
+            DateTime dataIt = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
+            DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
 
             object[,] dadosEstacao = new object[16, 1];
 
@@ -62,7 +64,8 @@ namespace HidrowebWin.Forms.ExcelManager
             dadosEstacao[12, 0] = estacao.Altitude;
             dadosEstacao[13, 0] = estacao.AreaDrenagem;
             dadosEstacao[14, 0] = DateTime.Now;
-            dadosEstacao[15, 0] = $"De {estacao.Inicio.Date.ToString("dd/MM/yyyy")} a {estacao.Fim.Date.ToString("dd/MM/yyyy")}";
+            dadosEstacao[15, 0] = string.Format("De {0} a {1}", new object[] { estacao.Inicio.HasValue?estacao.Inicio.Value.ToString("dd/MM/yyyy"):dataIt.ToString("dd/MM/yyyy")
+                                                                ,estacao.Fim.HasValue?estacao.Fim.Value.ToString("dd/MM/yyyy"):dataFim.ToString("dd/MM/yyyy")});
 
 
             Range range = worksheet.Cells[2, 3];
@@ -79,17 +82,20 @@ namespace HidrowebWin.Forms.ExcelManager
         {
             GC.Collect();
             SerieHistorica linhaEstacao;
-            DateTime dataIt = estacao.Inicio;
+
+            DateTime dataInicio = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
+            DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
+            DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
 
             //Select the sheet
             _Worksheet worksheet = workbook.Worksheets[2];
 
-            int monthQuantity = (((estacao.Fim.Year - estacao.Inicio.Year) * 12) + estacao.Fim.Month - estacao.Inicio.Month)+1;
+            int monthQuantity = (((dataFim.Year - dataIt.Year) * 12) + dataFim.Month - dataIt.Month)+1;
 
             //array de dados
             object[,] dados = new object[monthQuantity, 37];
             int i = 0;
-            while (dataIt <= estacao.Fim)//Cria todas as linhas até a data fim.
+            while (dataIt <= dataFim)//Cria todas as linhas até a data fim.
             {
                 //Tenta buscar dados consistidos, senão busca os dados Brutos
                 linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
@@ -138,16 +144,19 @@ namespace HidrowebWin.Forms.ExcelManager
             GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[3];
             SerieHistorica linhaEstacao;
-            DateTime dataIt = estacao.Inicio;
 
-            long daysQuantity = Convert.ToInt64((estacao.Fim - estacao.Inicio).TotalDays) + DateTime.DaysInMonth(estacao.Fim.Year, estacao.Fim.Month);
+            DateTime dataInicio = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
+            DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
+            DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
+
+            long daysQuantity = Convert.ToInt64((dataFim - dataIt).TotalDays) + DateTime.DaysInMonth(dataFim.Year, dataFim.Month);
 
             object[,] dados = new object[daysQuantity, 3];
 
             int i = 0;
             int ultimaLinha = 0;
 
-            while (dataIt <= estacao.Fim)//Cria todas as linhas até a data fim.
+            while (dataIt <= dataFim)//Cria todas as linhas até a data fim.
             {
 
                 //Tenta buscar dados consistidos, senão busca os dados Brutos
@@ -182,10 +191,7 @@ namespace HidrowebWin.Forms.ExcelManager
             return workbook;
         }
 
-        public static void FecharAplicacao()
-        {
-            app.Quit();
-        }
+
         #endregion
 
         #region Aba Resumo Mes
@@ -196,14 +202,17 @@ namespace HidrowebWin.Forms.ExcelManager
             _Worksheet worksheet = workbook.Worksheets[4];
             SerieHistorica linhaEstacao = new SerieHistorica();
 
-            DateTime dataIt = new DateTime(estacao.Inicio.Year,1, 1);
+            DateTime dataInicio = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
+            DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
 
-            long yearsQuantity = estacao.Fim.Year - estacao.Inicio.Year+1; //Adiciona ano final 
+            DateTime dataIt = new DateTime(dataInicio.Year,1, 1);
+
+            long yearsQuantity = dataFim.Year - dataInicio.Year+1; //Adiciona ano final 
 
             object[,] dados = new object[yearsQuantity, 28];
 
             int i = 0;
-            while (dataIt <= estacao.Fim)//Cria todas as linhas até a data fim.
+            while (dataIt <= dataFim)//Cria todas as linhas até a data fim.
             {
                 dados[i, 0] = dataIt.Date.Year;
 
@@ -252,7 +261,10 @@ namespace HidrowebWin.Forms.ExcelManager
             GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[5];
 
-            DateTime dataIt = estacao.Inicio;
+
+            DateTime dataInicio = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
+            DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
+            DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
 
             int linhasRange = 32;
             int anoIteracao = 0;
@@ -260,7 +272,7 @@ namespace HidrowebWin.Forms.ExcelManager
 
             SerieHistorica linhaEstacao = new SerieHistorica();
 
-            while (dataIt <= estacao.Fim)//Cria todas as linhas até a data fim.
+            while (dataIt <= dataFim)//Cria todas as linhas até a data fim.
             {
                 object[,] dados = new object[32, 25];
 
@@ -323,10 +335,13 @@ namespace HidrowebWin.Forms.ExcelManager
             GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[6];
 
-            DateTime dataIt = estacao.Inicio;
+            DateTime dataInicio = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
+            DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
+            DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
+
             SerieHistorica linhaEstacao = new SerieHistorica();
 
-            int totalAnos = estacao.Fim.Year - dataIt.Year; // Dias no mes mais linha referente ao ano.
+            int totalAnos = dataFim.Year - dataIt.Year; // Dias no mes mais linha referente ao ano.
             int somatorioDias;
             bool linhaInvalida;
 
@@ -434,16 +449,19 @@ namespace HidrowebWin.Forms.ExcelManager
 
         #endregion
 
-        #region Aba resumo dias chuva
+        #region Aba resumo dias falha
         public static _Workbook CriarAbaResumoDiasFalha(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
         {
             GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[7];
 
-            DateTime dataIt = estacao.Inicio;
+            DateTime dataInicio = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
+            DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
+            DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
+
             SerieHistorica linhaEstacao = new SerieHistorica();
 
-            int totalAnos = estacao.Fim.Year - dataIt.Year; // Dias no mes mais linha referente ao ano.
+            int totalAnos = dataFim.Year - dataIt.Year; // Dias no mes mais linha referente ao ano.
             int somatorioDias;
 
             object[,] dados = new object[totalAnos + 2, 27];
@@ -530,7 +548,7 @@ namespace HidrowebWin.Forms.ExcelManager
                     if (valor != 0)
                         quantidadeValores++;
                 }
-                media = somatorio / quantidadeValores;
+                media = somatorio / (dataFim.Year - dataInicio.Year + 1);
                 dados[totalLinhas - 1, linhaMedia] = media;
             }
 
@@ -548,9 +566,17 @@ namespace HidrowebWin.Forms.ExcelManager
             return workbook;
         }
 
-        public static void FinalizarPlanilha()
+        public static void FecharAplicacao(_Workbook workbook)
         {
-            app.Calculation = Microsoft.Office.Interop.Excel.XlCalculation.xlCalculationManual;
+            app.Visible = true;
+
+            //workbook.Close();
+            //app.Workbooks.Close();
+            //app.Quit();
+
+            //Marshal.ReleaseComObject(workbook);
+            //Marshal.ReleaseComObject(app.Workbooks);
+            //Marshal.ReleaseComObject(app);
         }
 
         #endregion

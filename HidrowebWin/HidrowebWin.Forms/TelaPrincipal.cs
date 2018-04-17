@@ -54,7 +54,7 @@ namespace HidrowebWin.Forms
 
         private void addToSelectBtn_Click(object sender, EventArgs e)
         {
-            if (preListBox.Items.Count == 0)
+            if (preListBox.Items.Count == 0 || preListBox.SelectedItem==null)
                 return;
 
             selectLstBox.Items.Add(preListBox.SelectedItem);
@@ -63,7 +63,7 @@ namespace HidrowebWin.Forms
 
         private void remOfSelect_Click(object sender, EventArgs e)
         {
-            if (selectLstBox.Items.Count == 0)
+            if (selectLstBox.Items.Count == 0 || selectLstBox.SelectedItem == null)
                 return;
 
             preListBox.Items.Add(selectLstBox.SelectedItem);
@@ -83,6 +83,8 @@ namespace HidrowebWin.Forms
             boxBusca.Enabled = false;
             boxSelecao.Enabled = false;
 
+
+
             foreach (var item in selectLstBox.Items) {
 
                 string codigo = item.ToString().Split('-')[0];
@@ -100,15 +102,14 @@ namespace HidrowebWin.Forms
                         var dadosSerieHistorica = DataTableParaSerieHistorica(dadosEstacao.Dados);
                         var estacao = ListaEstacoesCache.Estacoes.First(c => c.Codigo == Convert.ToInt32(codigo));
 
-                        var planilha = ExcelInteropHelper.CriarNovaPlanilhaPluviometrico("item");
-                        planilha = ExcelInteropHelper.CriarAbaEstacao(planilha, estacao);
+                        _Workbook planilha = ExcelInteropHelper.CriarNovaPlanilhaPluviometrico("item");
+                        planilha = ExcelInteropHelper.CriarAbaEstacao(planilha, dadosSerieHistorica, estacao);
                         planilha = ExcelInteropHelper.CriarAbaChuvas(planilha, dadosSerieHistorica, estacao);
+                        planilha = ExcelInteropHelper.CriarAbaDiaria(planilha, dadosSerieHistorica, estacao);
                         planilha = ExcelInteropHelper.CriarAbaResumo(planilha, dadosSerieHistorica, estacao);
                         planilha = ExcelInteropHelper.CriarAbaResumoDia(planilha, dadosSerieHistorica, estacao);
                         planilha = ExcelInteropHelper.CriarAbaResumoDiasChuva(planilha, dadosSerieHistorica, estacao);
                         planilha = ExcelInteropHelper.CriarAbaResumoDiasFalha(planilha, dadosSerieHistorica, estacao);
-                        ExcelInteropHelper.FinalizarPlanilha();
-
                         Atividade.Text = $"Salvando planilha.";
 
                         planilha.SaveAs(escolherDiretorio.SelectedPath+$"/{codigo}", Microsoft.Office.Interop.Excel.XlFileFormat.xlOpenXMLWorkbook, null,
@@ -116,7 +117,7 @@ namespace HidrowebWin.Forms
                         Microsoft.Office.Interop.Excel.XlSaveConflictResolution.xlUserResolution, true,
                         null, null, null);
 
-                        ExcelInteropHelper.FecharAplicacao();
+                        ExcelInteropHelper.FecharAplicacao(planilha);
                     }
                     else
                     {
@@ -131,7 +132,6 @@ namespace HidrowebWin.Forms
                     MessageBox.Show(ex.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1);
                 }
             }
-
             Atividade.Text = string.Empty;
             boxBusca.Enabled = true;
             boxSelecao.Enabled = true;
