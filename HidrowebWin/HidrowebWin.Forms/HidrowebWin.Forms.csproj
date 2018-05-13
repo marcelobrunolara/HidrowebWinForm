@@ -93,11 +93,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfiguracoesProxy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ConfiguracoesProxy.Designer.cs">
+      <DependentUpon>ConfiguracoesProxy.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Constants.cs" />
     <Compile Include="Data\BuscaDadosHelper.cs" />
     <Compile Include="Data\DataExtensionHelper.cs" />
     <Compile Include="Data\ListaEstacoesCache.cs" />
     <Compile Include="Data\Models\EstacaoData.cs" />
-    <Compile Include="Data\Models\SerieHistorica.cs" />
+    <Compile Include="Data\Models\SerieHistoricaCotas.cs" />
+    <Compile Include="Data\Models\SerieHistoricaChuvas.cs" />
+    <Compile Include="Data\Models\SerieHistoricaVazao.cs" />
     <Compile Include="ExcelManager\ExcelInteropHelper.cs" />
     <Compile Include="ExcelManager\TipoPlanilha.cs" />
     <Compile Include="Service References\ServiceANA\Reference.cs">
@@ -115,6 +124,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="ConfiguracoesProxy.resx">
+      <DependentUpon>ConfiguracoesProxy.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -142,6 +154,9 @@
     </Compile>
     <None Include="Service References\ServiceANA\ServiceANA.wsdl" />
     <Content Include="template_plu.xlsx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="template_flu.xlsx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

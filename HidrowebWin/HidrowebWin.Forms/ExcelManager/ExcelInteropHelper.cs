@@ -14,6 +14,7 @@ namespace HidrowebWin.Forms.ExcelManager
     {
         private static Application app;
 
+        #region Pluviométrico
         public static _Workbook CriarNovaPlanilhaPluviometrico(string filename)
         {
 
@@ -21,7 +22,7 @@ namespace HidrowebWin.Forms.ExcelManager
             app = new Microsoft.Office.Interop.Excel.Application();
             // creating new WorkBook within Excel application
 
-            _Workbook workbook = app.Workbooks.Open(Environment.CurrentDirectory+"/template_plu.xlsx");
+            _Workbook workbook = app.Workbooks.Open(Environment.CurrentDirectory + "/template_plu.xlsx");
 
             // creating new Excelsheet in workbook
             Microsoft.Office.Interop.Excel._Worksheet worksheet = null;
@@ -39,7 +40,7 @@ namespace HidrowebWin.Forms.ExcelManager
         }
 
         #region [Aba Estação]
-        public static _Workbook CriarAbaEstacao(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        public static _Workbook CriarAbaEstacao(_Workbook workbook, IList<SerieHistoricaChuvas> serieHistorica, EstacaoData estacao)
         {
             //Select the sheet
             _Worksheet worksheet = workbook.Worksheets[1];
@@ -78,10 +79,10 @@ namespace HidrowebWin.Forms.ExcelManager
         #endregion
 
         #region [Aba Chuvas]
-        public static _Workbook CriarAbaChuvas(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        public static _Workbook CriarAbaChuvas(_Workbook workbook, IList<SerieHistoricaChuvas> serieHistorica, EstacaoData estacao)
         {
             GC.Collect();
-            SerieHistorica linhaEstacao;
+            SerieHistoricaChuvas linhaEstacao;
 
             DateTime dataInicio = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
             DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
@@ -90,7 +91,7 @@ namespace HidrowebWin.Forms.ExcelManager
             //Select the sheet
             _Worksheet worksheet = workbook.Worksheets[2];
 
-            int monthQuantity = (((dataFim.Year - dataIt.Year) * 12) + dataFim.Month - dataIt.Month)+1;
+            int monthQuantity = (((dataFim.Year - dataIt.Year) * 12) + dataFim.Month - dataIt.Month) + 1;
 
             //array de dados
             object[,] dados = new object[monthQuantity, 37];
@@ -139,11 +140,11 @@ namespace HidrowebWin.Forms.ExcelManager
         #endregion
 
         #region [Aba Diária]
-        public static _Workbook CriarAbaDiaria(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        public static _Workbook CriarAbaDiaria(_Workbook workbook, IList<SerieHistoricaChuvas> serieHistorica, EstacaoData estacao)
         {
             GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[3];
-            SerieHistorica linhaEstacao;
+            SerieHistoricaChuvas linhaEstacao;
 
             DateTime dataInicio = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
             DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
@@ -196,18 +197,18 @@ namespace HidrowebWin.Forms.ExcelManager
 
         #region Aba Resumo Mes
 
-        public static _Workbook CriarAbaResumo(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        public static _Workbook CriarAbaResumo(_Workbook workbook, IList<SerieHistoricaChuvas> serieHistorica, EstacaoData estacao)
         {
             GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[4];
-            SerieHistorica linhaEstacao = new SerieHistorica();
+            SerieHistoricaChuvas linhaEstacao = new SerieHistoricaChuvas();
 
             DateTime dataInicio = estacao.Inicio.HasValue ? estacao.Inicio.Value : serieHistorica.OrderBy(c => c.Data).First().Data;
             DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
 
-            DateTime dataIt = new DateTime(dataInicio.Year,1, 1);
+            DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
 
-            long yearsQuantity = dataFim.Year - dataInicio.Year+1; //Adiciona ano final 
+            long yearsQuantity = dataFim.Year - dataInicio.Year + 1; //Adiciona ano final 
 
             object[,] dados = new object[yearsQuantity, 28];
 
@@ -216,23 +217,23 @@ namespace HidrowebWin.Forms.ExcelManager
             {
                 dados[i, 0] = dataIt.Date.Year;
 
-                for (int j=1; j<=12; j++)
+                for (int j = 1; j <= 12; j++)
                 {
                     //Tenta buscar dados consistidos, senão busca os dados Brutos
                     linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
                     if (linhaEstacao == null)
                         linhaEstacao = serieHistorica.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "1");
 
-                    if(linhaEstacao == null)
+                    if (linhaEstacao == null)
                     {
                         dados[i, 14] = "a";
-                        dados[i, j+14] = "i";
+                        dados[i, j + 14] = "i";
                     }
                     else
                     {
                         dados[i, j] = linhaEstacao.Total;
-                        dados[i, j + 14] = string.IsNullOrWhiteSpace(linhaEstacao.TotalStatus)?"b": linhaEstacao.TotalStatus;
-                        dados[i, 14] = linhaEstacao.NivelConsistencia!="2"?"a":string.Empty;
+                        dados[i, j + 14] = string.IsNullOrWhiteSpace(linhaEstacao.TotalStatus) ? "b" : linhaEstacao.TotalStatus;
+                        dados[i, 14] = linhaEstacao.NivelConsistencia != "2" ? "a" : string.Empty;
                         dados[i, 13] = linhaEstacao.TotalAnual;
                         dados[i, 27] = linhaEstacao.TotalAnualStatus;
                     }
@@ -248,7 +249,7 @@ namespace HidrowebWin.Forms.ExcelManager
 
             Range range2 = worksheet.Cells[3, 2];
             range = range.Resize[yearsQuantity, 14];
-            range.Cells.Borders.LineStyle = XlLineStyle.xlContinuous; 
+            range.Cells.Borders.LineStyle = XlLineStyle.xlContinuous;
             return workbook;
         }
 
@@ -256,7 +257,7 @@ namespace HidrowebWin.Forms.ExcelManager
 
         #region Aba resumo dia
 
-        public static _Workbook CriarAbaResumoDia(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        public static _Workbook CriarAbaResumoDia(_Workbook workbook, IList<SerieHistoricaChuvas> serieHistorica, EstacaoData estacao)
         {
             GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[5];
@@ -270,7 +271,7 @@ namespace HidrowebWin.Forms.ExcelManager
             int anoIteracao = 0;
             int linhaInicio = 3;
 
-            SerieHistorica linhaEstacao = new SerieHistorica();
+            SerieHistoricaChuvas linhaEstacao = new SerieHistoricaChuvas();
 
             while (dataIt <= dataFim)//Cria todas as linhas até a data fim.
             {
@@ -307,7 +308,7 @@ namespace HidrowebWin.Forms.ExcelManager
                         }
 
                     }
-                    if(i!=0)
+                    if (i != 0)
                         dataIt = dataIt.AddMonths(1);
                 }
 
@@ -330,7 +331,7 @@ namespace HidrowebWin.Forms.ExcelManager
         #endregion
 
         #region Aba resumo dias chuva
-        public static _Workbook CriarAbaResumoDiasChuva(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        public static _Workbook CriarAbaResumoDiasChuva(_Workbook workbook, IList<SerieHistoricaChuvas> serieHistorica, EstacaoData estacao)
         {
             GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[6];
@@ -339,22 +340,22 @@ namespace HidrowebWin.Forms.ExcelManager
             DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
             DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
 
-            SerieHistorica linhaEstacao = new SerieHistorica();
+            SerieHistoricaChuvas linhaEstacao = new SerieHistoricaChuvas();
 
             int totalAnos = dataFim.Year - dataIt.Year; // Dias no mes mais linha referente ao ano.
             int somatorioDias;
             bool linhaInvalida;
 
-            object[,] dados = new object[totalAnos+2, 27];
+            object[,] dados = new object[totalAnos + 2, 27];
 
             int totalLinhas = totalAnos + 2;
 
-            for (int linha=0; linha< totalLinhas-1; linha++ )
+            for (int linha = 0; linha < totalLinhas - 1; linha++)
             {
                 somatorioDias = 0;
                 linhaInvalida = false;
 
-                for (int coluna=0; coluna<14; coluna++)
+                for (int coluna = 0; coluna < 14; coluna++)
                 {
                     //Somatorio Total
                     if (coluna == 13)
@@ -400,7 +401,8 @@ namespace HidrowebWin.Forms.ExcelManager
                                     dados[linha, coluna + 13] = "a";
                                     linhaInvalida = true;
                                 }
-                            }else
+                            }
+                            else
                             {
                                 dados[linha, coluna] = linhaEstacao.NumDiasDeChuva;
                                 somatorioDias += Convert.ToInt32(linhaEstacao.NumDiasDeChuva);
@@ -413,24 +415,24 @@ namespace HidrowebWin.Forms.ExcelManager
                 }
             }
 
-            dados[totalLinhas-1, 0] = "Médias";
+            dados[totalLinhas - 1, 0] = "Médias";
 
-            for(int linhaMedia =1; linhaMedia <= 13; linhaMedia++)
+            for (int linhaMedia = 1; linhaMedia <= 13; linhaMedia++)
             {
                 int valor = 0;
                 int quantidadeValores = 0;
                 double somatorio = 0.0;
                 double media = 0.0;
 
-                for (int colunaSomatorio=0; colunaSomatorio< totalLinhas-1; colunaSomatorio++)
+                for (int colunaSomatorio = 0; colunaSomatorio < totalLinhas - 1; colunaSomatorio++)
                 {
                     valor = !(dados[colunaSomatorio, linhaMedia] == string.Empty) ? Convert.ToInt32(dados[colunaSomatorio, linhaMedia]) : 0;
                     somatorio += valor;
-                    if(valor!=0)
+                    if (valor != 0)
                         quantidadeValores++;
                 }
                 media = somatorio / quantidadeValores;
-                dados[totalLinhas -1, linhaMedia] = media;
+                dados[totalLinhas - 1, linhaMedia] = media;
             }
 
 
@@ -450,7 +452,7 @@ namespace HidrowebWin.Forms.ExcelManager
         #endregion
 
         #region Aba resumo dias falha
-        public static _Workbook CriarAbaResumoDiasFalha(_Workbook workbook, IList<SerieHistorica> serieHistorica, EstacaoData estacao)
+        public static _Workbook CriarAbaResumoDiasFalha(_Workbook workbook, IList<SerieHistoricaChuvas> serieHistorica, EstacaoData estacao)
         {
             GC.Collect();
             _Worksheet worksheet = workbook.Worksheets[7];
@@ -459,7 +461,7 @@ namespace HidrowebWin.Forms.ExcelManager
             DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
             DateTime dataFim = estacao.Fim.HasValue ? estacao.Fim.Value : serieHistorica.OrderByDescending(c => c.Data).First().Data;
 
-            SerieHistorica linhaEstacao = new SerieHistorica();
+            SerieHistoricaChuvas linhaEstacao = new SerieHistoricaChuvas();
 
             int totalAnos = dataFim.Year - dataIt.Year; // Dias no mes mais linha referente ao ano.
             int somatorioDias;
@@ -496,7 +498,7 @@ namespace HidrowebWin.Forms.ExcelManager
                             dados[linha, coluna] = diasMes;
                             dados[linha, coluna + 13] = "i";
                         }
-                        else 
+                        else
                         {
                             int diasFalha = linhaEstacao.StatusChuvasArray.Where(c => c == "0").Count();
                             int diasChuva = linhaEstacao.StatusChuvasArray.Where(c => c == "1").Count();
@@ -509,7 +511,7 @@ namespace HidrowebWin.Forms.ExcelManager
                                 dados[linha, coluna + 13] = "i";
                                 somatorioDias += diasFalha;
                             }
-                            else if(diasMes!=diasFalha)
+                            else if (diasMes != diasFalha)
                             {
                                 if (diasMes > diasFalha)
                                 {
@@ -523,7 +525,7 @@ namespace HidrowebWin.Forms.ExcelManager
                                     dados[linha, coluna] = diasMes;
                                     dados[linha, coluna + 13] = "i";
                                 }
-                          }
+                            }
 
                         }
                         if (coluna != 0)
@@ -580,6 +582,284 @@ namespace HidrowebWin.Forms.ExcelManager
         }
 
         #endregion
+
+        #endregion
+
+        #region Fluviométrico
+
+        //CotaStatus: 0 = Branco, 1 = Real, 2 = Estimado, 3 = Duvidoso, 4 = Régua Seca
+
+        public static _Workbook CriarNovaPlanilhaFluviometrico(string filename)
+        {
+
+            // creating Excel Application
+            app = new Microsoft.Office.Interop.Excel.Application();
+            // creating new WorkBook within Excel application
+
+            _Workbook workbook = app.Workbooks.Open(Environment.CurrentDirectory + "/template_flu.xlsx");
+
+            // creating new Excelsheet in workbook
+            Microsoft.Office.Interop.Excel._Worksheet worksheet = null;
+
+            Sheets xlSheets = null;
+            Worksheet xlNewSheet = null;
+
+
+            xlSheets = workbook.Sheets as Sheets;
+
+            // see the excel sheet behind the program
+            app.Visible = true;
+
+            return workbook;
+        }
+
+        #region [Aba Estação Fluviometrico]
+        public static _Workbook CriarAbaEstacaoFluviometrica(_Workbook workbook, IList<SerieHistoricaVazao> serieHistoricaVazao, EstacaoData estacao)
+        {
+            //Select the sheet
+            _Worksheet worksheet = workbook.Worksheets[1];
+
+            DateTime dataIt = serieHistoricaVazao.OrderBy(c => c.Data).First().Data;
+            DateTime dataFim = serieHistoricaVazao.OrderByDescending(c => c.Data).First().Data;
+
+            object[,] dadosEstacao = new object[16, 1];
+
+            dadosEstacao[0, 0] = estacao.Codigo.ToString();
+            dadosEstacao[1, 0] = estacao.Nome;
+            dadosEstacao[2, 0] = estacao.CodigoAdicional;
+            dadosEstacao[3, 0] = estacao.NomeBacia;
+            dadosEstacao[4, 0] = estacao.NomeSubBacia;
+            dadosEstacao[5, 0] = estacao.NomeRio;
+            dadosEstacao[6, 0] = estacao.Estado;
+            dadosEstacao[7, 0] = estacao.Municipio;
+            dadosEstacao[8, 0] = estacao.Responsavel;
+            dadosEstacao[9, 0] = estacao.Operadora;
+            dadosEstacao[10, 0] = estacao.Latitude;
+            dadosEstacao[11, 0] = estacao.Longitude;
+            dadosEstacao[12, 0] = estacao.Altitude;
+            dadosEstacao[13, 0] = estacao.AreaDrenagem;
+            dadosEstacao[14, 0] = DateTime.Now;
+            dadosEstacao[15, 0] = string.Format("De {0} a {1}", new object[] { dataIt.ToString("dd/MM/yyyy")
+                                                                ,dataFim.ToString("dd/MM/yyyy")});
+
+
+            Range range = worksheet.Cells[2, 3];
+            range = range.Resize[16, 1];
+
+            range.Value = dadosEstacao;
+
+            return workbook;
+        }
+        #endregion
+
+        #region [Aba Cotas]
+        public static _Workbook CriarAbaCotas(_Workbook workbook, IList<SerieHistoricaCotas> serieHistoricaCotas, EstacaoData estacao)
+        {
+            GC.Collect();
+            SerieHistoricaCotas linhaEstacao;
+
+            DateTime dataInicio = serieHistoricaCotas.OrderBy(c => c.Data).First().Data;
+            DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
+            DateTime dataFim = serieHistoricaCotas.OrderByDescending(c => c.Data).First().Data;
+
+            //Select the sheet
+            _Worksheet worksheet = workbook.Worksheets[2];
+
+            int monthQuantity = (((dataFim.Year - dataIt.Year) * 12) + dataFim.Month - dataIt.Month) + 1;
+
+            //array de dados
+            object[,] dados = new object[monthQuantity, 39];
+            int i = 0;
+            dados[0, 0] = estacao.Codigo;
+            while (dataIt <= dataFim)//Cria todas as linhas até a data fim.
+            {
+                //Tenta buscar dados consistidos, senão busca os dados Brutos
+                linhaEstacao = serieHistoricaCotas.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
+                if (linhaEstacao == null)
+                {
+                    linhaEstacao = serieHistoricaCotas.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "1");
+                    dados[i, 38] = 1;
+                }
+
+                dados[i, 1] = dataIt.Date;
+
+                if (linhaEstacao == null) //linha de dados não existente na base da Ana
+                {
+                    dados[i, 38] = 5;
+                }
+                else
+                {
+
+                    for (int j = 0; j < 31; j++)
+                    {
+                        dados[i, 2 + j] = linhaEstacao.CotasArray[j + 1];
+                    }
+                    dados[i, 33] = linhaEstacao.Maxima;
+                    dados[i, 34] = linhaEstacao.Minima;
+                    dados[i, 35] = linhaEstacao.Media;
+                    dados[i, 36] = linhaEstacao.DiaMaxima;
+                    dados[i, 37] = linhaEstacao.DiaMinima;
+                }
+
+                i++;
+                dataIt = dataIt.AddMonths(1);
+            }
+
+            Range range = worksheet.Cells[2, 1];
+            range = range.Resize[monthQuantity, 39];
+
+            range.Value = dados;
+
+            return workbook;
+        }
+
+        #endregion
+
+        #region [Aba Vazão]
+        public static _Workbook CriarAbaVazao(_Workbook workbook, IList<SerieHistoricaVazao> serieHistoricaVazao, EstacaoData estacao)
+        {
+            GC.Collect();
+            SerieHistoricaVazao linhaEstacao;
+
+            DateTime dataInicio = serieHistoricaVazao.OrderBy(c => c.Data).First().Data;
+            DateTime dataIt = new DateTime(dataInicio.Year, 1, 1);
+            DateTime dataFim = serieHistoricaVazao.OrderByDescending(c => c.Data).First().Data;
+
+            //Select the sheet
+            _Worksheet worksheet = workbook.Worksheets[3];
+
+            int monthQuantity = (((dataFim.Year - dataIt.Year) * 12) + dataFim.Month - dataIt.Month) + 1;
+
+            //array de dados
+            object[,] dados = new object[monthQuantity, 39];
+            int i = 0;
+            dados[0, 0] = estacao.Codigo;
+            while (dataIt <= dataFim)//Cria todas as linhas até a data fim.
+            {
+                //Tenta buscar dados consistidos, senão busca os dados Brutos
+                linhaEstacao = serieHistoricaVazao.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
+                if (linhaEstacao == null)
+                {
+                    linhaEstacao = serieHistoricaVazao.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "1");
+                    dados[i, 38] = 1;
+                }
+                dados[i, 1] = dataIt.Date;
+
+                if (linhaEstacao == null) //linha de dados não existente na base da Ana
+                {
+                    dados[i, 38] = 5;
+                }
+                else
+                {
+
+                    for (int j = 0; j < 31; j++)
+                    {
+                        dados[i, 2 + j] = linhaEstacao.VazaoArray[j + 1];
+                    }
+                    dados[i, 33] = linhaEstacao.Maxima;
+                    dados[i, 34] = linhaEstacao.Minima;
+                    dados[i, 35] = linhaEstacao.Media;
+                    dados[i, 36] = linhaEstacao.DiaMaxima;
+                    dados[i, 37] = linhaEstacao.DiaMinima;
+                }
+
+                i++;
+                dataIt = dataIt.AddMonths(1);
+            }
+
+            Range range = worksheet.Cells[2, 1];
+            range = range.Resize[monthQuantity, 39];
+
+            range.Value = dados;
+
+            return workbook;
+        }
+
+        #endregion
+
+        #region [Aba Resumo Cotas Vazão]
+        public static _Workbook CriarCotaVazaoDiaria(_Workbook workbook, IList<SerieHistoricaCotas> serieHistoricaCotas, IList<SerieHistoricaVazao> serieHistoricaVazao, EstacaoData estacao)
+        {
+            GC.Collect();
+            _Worksheet worksheet = workbook.Worksheets[4];
+
+            SerieHistoricaVazao linhaVazao;
+            SerieHistoricaCotas linhaCotas;
+
+            DateTime dataInicioVazao = serieHistoricaVazao.OrderBy(c => c.Data).First().Data;
+            DateTime dataFimVazao = serieHistoricaVazao.OrderByDescending(c => c.Data).First().Data;
+
+            DateTime dataInicioCotas = serieHistoricaCotas.OrderBy(c => c.Data).First().Data;
+            DateTime dataFimCotas= serieHistoricaCotas.OrderByDescending(c => c.Data).First().Data;
+
+            var anoInicio = dataInicioVazao.Year > dataInicioCotas.Year ? dataInicioVazao.Year : dataInicioCotas.Year;
+            DateTime dataFim = dataFimVazao > dataFimCotas ? dataFimVazao : dataFimCotas;
+
+            DateTime dataIt = new DateTime(anoInicio, 1, 1);
+
+            long daysQuantity = Convert.ToInt64((dataFim - dataIt).TotalDays) + DateTime.DaysInMonth(dataFim.Year, dataFim.Month);
+
+            object[,] dados = new object[daysQuantity, 5];
+
+            int i = 0;
+            int ultimaLinha = 0;
+
+            while (dataIt <= dataFim)//Cria todas as linhas até a data fim.
+            {
+                //Tenta buscar dados consistidos de COTAS, senão busca os dados Brutos
+                linhaCotas = serieHistoricaCotas.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
+                if (linhaCotas == null)
+                    linhaCotas = serieHistoricaCotas.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "1");
+
+                //Tenta buscar dados consistidos de VAZAO, senão busca os dados Brutos
+                linhaVazao = serieHistoricaVazao.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "2");
+                if (linhaVazao == null)
+                    linhaVazao = serieHistoricaVazao.FirstOrDefault(c => c.Data == dataIt && c.NivelConsistencia == "1");
+
+                var totalDias = DateTime.DaysInMonth(dataIt.Year, dataIt.Month);
+
+                for (int j = 0; j < totalDias; j++)
+                {
+                    dados[ultimaLinha, 0] = dataIt.Date;
+
+                    //COTAS
+                    if (linhaCotas == null)
+                    {
+                        dados[ultimaLinha, 3] = 5;
+                    }
+                    else
+                    {
+                        dados[ultimaLinha, 1] = linhaCotas.CotasArray[j + 1];
+                        dados[ultimaLinha, 3] = linhaCotas.NivelConsistencia;
+                    }
+                    //VAZÃO
+                    if (linhaVazao == null)
+                    {
+                        dados[ultimaLinha, 3] = 5;
+                    }
+                    else
+                    {
+                        dados[ultimaLinha, 2] = linhaVazao.VazaoArray[j + 1];
+                        dados[ultimaLinha, 3] = linhaVazao.NivelConsistencia;
+                    }
+                    ultimaLinha++;
+                    dataIt = dataIt.AddDays(1);
+                }
+            }
+
+            Range range = worksheet.Cells[3, 2];
+            range = range.Resize[ultimaLinha, 5];
+
+            range.Value = dados;
+
+            return workbook;
+        }
+
+
+        #endregion
+
+        #endregion
+
 
     }
 }

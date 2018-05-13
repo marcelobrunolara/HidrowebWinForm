@@ -17,22 +17,40 @@ namespace HidrowebWin.Forms
 {
     public partial class TelaPrincipal : Form
     {
+        private ConfiguracoesProxy telaProxy;
         public TelaPrincipal()
         {
             InitializeComponent();
             Atividade.Text = string.Empty;
-        }
 
+    }
+
+        #region Eventos
         private async void button1_Click(object sender, EventArgs e)
         {
             int codigoEstacao;
             button1.Enabled = false;
 
             bool isValid = Int32.TryParse(codigoEstacaoTxtBox.Text, out codigoEstacao);
-            if (isValid)
+            if (isValid && (string)tipoEstacaoCombo.SelectedItem == "Pluviométrica")
             {
                 Atividade.Text = "Buscando estação...";
                 var estacao = await BuscaDadosHelper.BuscarEstacaoPluviometrica(codigoEstacao);
+
+                if (string.IsNullOrEmpty(estacao.Nome))
+                    MessageBox.Show("Estação não encontrada", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1);
+                else
+                {
+                    ListaEstacoesCache.Estacoes.Add(estacao);
+                    preListBox.Items.Add($"{estacao.Codigo}-{estacao.Nome}");
+                    codigoEstacaoTxtBox.Text = string.Empty;
+                }
+                Atividade.Text = string.Empty;
+            }
+            if (isValid && (string)tipoEstacaoCombo.SelectedItem == "Fluviométrica")
+            {
+                Atividade.Text = "Buscando estação...";
+                var estacao = await BuscaDadosHelper.BuscarEstacaoFluviometrica(codigoEstacao);
 
                 if (string.IsNullOrEmpty(estacao.Nome))
                     MessageBox.Show("Estação não encontrada", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1);
@@ -54,7 +72,7 @@ namespace HidrowebWin.Forms
 
         private void addToSelectBtn_Click(object sender, EventArgs e)
         {
-            if (preListBox.Items.Count == 0 || preListBox.SelectedItem==null)
+            if (preListBox.Items.Count == 0 || preListBox.SelectedItem == null)
                 return;
 
             selectLstBox.Items.Add(preListBox.SelectedItem);
@@ -77,15 +95,43 @@ namespace HidrowebWin.Forms
 
             if (selectLstBox.Items.Count == 0)
             {
-                MessageBox.Show("Código pelo menos uma estação para gerar o relatório", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1);
+                MessageBox.Show("Insira pelo menos uma estação para gerar o relatório", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1);
             }
 
             boxBusca.Enabled = false;
             boxSelecao.Enabled = false;
 
+            if ((string)tipoEstacaoCombo.SelectedItem == "Fluviométrica")
+            {
+                await GerarRelatorioFluviometrico();
+            }
+            else
+            {
+                await GerarRelatorioPluviometrico();
+            }
+
+            Atividade.Text = string.Empty;
+            boxBusca.Enabled = true;
+            boxSelecao.Enabled = true;
+        }
 
 
-            foreach (var item in selectLstBox.Items) {
+        private void ApagarEstacoes(object sender, EventArgs e)
+        {
+            button1.Enabled = true;
+            codigoEstacaoTxtBox.Text = string.Empty;
+            preListBox.Items.Clear();
+            selectLstBox.Items.Clear();
+        }
+        #endregion
+
+
+        #region Métodos auxiliares
+
+        private async Task GerarRelatorioPluviometrico()
+        {
+            foreach (var item in selectLstBox.Items)
+            {
 
                 string codigo = item.ToString().Split('-')[0];
 
@@ -99,7 +145,7 @@ namespace HidrowebWin.Forms
                     {
                         Atividade.Text = $"Gerando planilha para estação: {codigo}";
 
-                        var dadosSerieHistorica = DataTableParaSerieHistorica(dadosEstacao.Dados);
+                        var dadosSerieHistorica = DataTableParaSerieHistoricaChuvas(dadosEstacao.Dados);
                         var estacao = ListaEstacoesCache.Estacoes.First(c => c.Codigo == Convert.ToInt32(codigo));
 
                         _Workbook planilha = ExcelInteropHelper.CriarNovaPlanilhaPluviometrico("item");
@@ -112,7 +158,7 @@ namespace HidrowebWin.Forms
                         planilha = ExcelInteropHelper.CriarAbaResumoDiasFalha(planilha, dadosSerieHistorica, estacao);
                         Atividade.Text = $"Salvando planilha.";
 
-                        planilha.SaveAs(escolherDiretorio.SelectedPath+$"/{codigo}", Microsoft.Office.Interop.Excel.XlFileFormat.xlOpenXMLWorkbook, null,
+                        planilha.SaveAs(escolherDiretorio.SelectedPath + $"/{codigo}", Microsoft.Office.Interop.Excel.XlFileFormat.xlOpenXMLWorkbook, null,
                         null, false, false, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlNoChange,
                         Microsoft.Office.Interop.Excel.XlSaveConflictResolution.xlUserResolution, true,
                         null, null, null);
@@ -132,35 +178,92 @@ namespace HidrowebWin.Forms
                     MessageBox.Show(ex.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1);
                 }
             }
-            Atividade.Text = string.Empty;
-            boxBusca.Enabled = true;
-            boxSelecao.Enabled = true;
         }
 
-        #region Métodos auxiliares
+        private async Task GerarRelatorioFluviometrico()
+        {
+            foreach (var item in selectLstBox.Items)
+            {
 
-        private IList<SerieHistorica> DataTableParaSerieHistorica(System.Data.DataTable dataTable)
+                string codigo = item.ToString().Split('-')[0];
+
+                Atividade.Text = $"Buscando dados estação {codigo} no Hidroweb-ANA";
+
+                var dadosVazaoEstacao = await ServiceANAHelper.DadosFluviometricosVazaoEstacao(Convert.ToInt32(codigo));
+
+                var dadosCotasEstacao = await ServiceANAHelper.DadosFluviometricosCotaEstacao(Convert.ToInt32(codigo));
+
+                try
+                {
+                    if (dadosVazaoEstacao.EhValido && dadosCotasEstacao.EhValido)
+                    {
+                        Atividade.Text = $"Gerando planilha para estação: {codigo}";
+
+                        var dadosSerieHistoricaCotas = DataTableParaSerieHistoricaCota(dadosCotasEstacao.Dados);
+                        var dadosSerieHistoricaVazao = DataTableParaSerieHistoricaVazao(dadosVazaoEstacao.Dados);
+
+                        var estacao = ListaEstacoesCache.Estacoes.First(c => c.Codigo == Convert.ToInt32(codigo));
+
+                        _Workbook planilha = ExcelInteropHelper.CriarNovaPlanilhaFluviometrico ("item");
+                        planilha = ExcelInteropHelper.CriarAbaEstacaoFluviometrica(planilha, dadosSerieHistoricaVazao, estacao);
+                        planilha = ExcelInteropHelper.CriarAbaCotas(planilha, dadosSerieHistoricaCotas, estacao);
+                        planilha = ExcelInteropHelper.CriarAbaVazao(planilha, dadosSerieHistoricaVazao, estacao);
+                        planilha = ExcelInteropHelper.CriarCotaVazaoDiaria(planilha, dadosSerieHistoricaCotas, dadosSerieHistoricaVazao, estacao);
+                        //planilha = ExcelInteropHelper.CriarAbaResumoDia(planilha, dadosSerieHistorica, estacao);
+                        //planilha = ExcelInteropHelper.CriarAbaResumoDiasChuva(planilha, dadosSerieHistorica, estacao);
+                        //planilha = ExcelInteropHelper.CriarAbaResumoDiasFalha(planilha, dadosSerieHistorica, estacao);
+                        Atividade.Text = $"Salvando planilha.";
+
+                        planilha.SaveAs(escolherDiretorio.SelectedPath + $"/{codigo}", Microsoft.Office.Interop.Excel.XlFileFormat.xlOpenXMLWorkbook, null,
+                        null, false, false, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlNoChange,
+                        Microsoft.Office.Interop.Excel.XlSaveConflictResolution.xlUserResolution, true,
+                        null, null, null);
+
+                        ExcelInteropHelper.FecharAplicacao(planilha);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Não foi possível encontrar dados para {Convert.ToInt32(codigo)}", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    boxBusca.Enabled = true;
+                    boxSelecao.Enabled = true;
+                    Atividade.Text = string.Empty;
+                    MessageBox.Show(ex.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1);
+                }
+            }
+        }
+
+        private IList<SerieHistoricaChuvas> DataTableParaSerieHistoricaChuvas(System.Data.DataTable dataTable)
         {
             if(dataTable!=null)
-                return dataTable.DataTableToList<SerieHistorica>().ToList();
+                return dataTable.DataTableToList<SerieHistoricaChuvas>().ToList();
+
+            return null;
+        }
+
+        private IList<SerieHistoricaVazao> DataTableParaSerieHistoricaVazao(System.Data.DataTable dataTable)
+        {
+            if (dataTable != null)
+                return dataTable.DataTableToList<SerieHistoricaVazao>().ToList();
+
+            return null;
+        }
+
+        private IList<SerieHistoricaCotas> DataTableParaSerieHistoricaCota(System.Data.DataTable dataTable)
+        {
+            if (dataTable != null)
+                return dataTable.DataTableToList<SerieHistoricaCotas>().ToList();
 
             return null;
         }
 
         #endregion
 
-        //Quando mudar a selação ativa o botão de busca
-        private void ApagarEstacoes(object sender, EventArgs e)
-        {
-            button1.Enabled = true;
-            codigoEstacaoTxtBox.Text = string.Empty;
-            preListBox.Items.Clear();
-            selectLstBox.Items.Clear();
-        }
+        //Quando mudar a seleção ativa o botão de busca
 
-        private void escolherDiretorio_HelpRequest(object sender, EventArgs e)
-        {
 
-        }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HidrowebWin.Forms.Data.Models
 {
-    public class SerieHistorica
+    public class SerieHistoricaChuvas
     {
 
         public string EstacaoCodigo { get; set; }
