@@ -568,19 +568,6 @@ namespace HidrowebWin.Forms.ExcelManager
             return workbook;
         }
 
-        public static void FecharAplicacao(_Workbook workbook)
-        {
-            app.Visible = true;
-
-            //workbook.Close();
-            //app.Workbooks.Close();
-            //app.Quit();
-
-            //Marshal.ReleaseComObject(workbook);
-            //Marshal.ReleaseComObject(app.Workbooks);
-            //Marshal.ReleaseComObject(app);
-        }
-
         #endregion
 
         #endregion
@@ -588,6 +575,8 @@ namespace HidrowebWin.Forms.ExcelManager
         #region Fluviométrico
 
         //CotaStatus: 0 = Branco, 1 = Real, 2 = Estimado, 3 = Duvidoso, 4 = Régua Seca
+
+        static object[,] dadosBackup;
 
         public static _Workbook CriarNovaPlanilhaFluviometrico(string filename)
         {
@@ -607,8 +596,10 @@ namespace HidrowebWin.Forms.ExcelManager
 
             xlSheets = workbook.Sheets as Sheets;
 
+
             // see the excel sheet behind the program
-            app.Visible = true;
+            app.Visible = false;
+
 
             return workbook;
         }
@@ -850,6 +841,9 @@ namespace HidrowebWin.Forms.ExcelManager
             Range range = worksheet.Cells[3, 2];
             range = range.Resize[ultimaLinha, 5];
 
+            dadosBackup = new object[ultimaLinha,5];
+            dadosBackup = dados;
+
             range.Value = dados;
 
             return workbook;
@@ -858,8 +852,125 @@ namespace HidrowebWin.Forms.ExcelManager
 
         #endregion
 
+        #region Grafico CT
+
+        public static _Workbook CriarGraficoCotaTempo(_Workbook workbook, EstacaoData estacao)
+        {
+            GC.Collect();
+            _Worksheet worksheet = workbook.Worksheets[5];
+
+            // Add chart.
+            var charts = worksheet.ChartObjects() as
+                Microsoft.Office.Interop.Excel.ChartObjects;
+            var chartObject = charts.Add(10, 10, 800, 600) as
+                Microsoft.Office.Interop.Excel.ChartObject;
+            var chart = chartObject.Chart;
+
+            var dadosGrafico = new object[dadosBackup.GetUpperBound(0)+1, 2];
+
+            for (int i=0; i< dadosBackup.GetUpperBound(0); i++)
+            {
+                dadosGrafico[i, 0] = dadosBackup[i, 0];
+                dadosGrafico[i, 1] = dadosBackup[i, 1];
+            }
+
+
+            Range range = worksheet.Cells[3, 2];
+            range = range.Resize[dadosGrafico.GetUpperBound(0), 2];
+            range.Value = dadosGrafico;
+
+            chart.SetSourceData(range);
+
+            // Set chart properties.
+            chart.ChartType = Microsoft.Office.Interop.Excel.XlChartType.xlXYScatter;
+            chart.ChartWizard(Source: range,
+                Title: "Cota X Tempo",
+                CategoryTitle: "Tempo",
+                ValueTitle: "Cotas");
+
+
+            return workbook;
+        }
+
         #endregion
 
+        #region Grafico CV
 
+        public static _Workbook CriarGraficoCotaVazao(_Workbook workbook, EstacaoData estacao)
+        {
+            GC.Collect();
+            _Worksheet worksheet = workbook.Worksheets[6];
+
+            // Add chart.
+            var charts = worksheet.ChartObjects() as
+                Microsoft.Office.Interop.Excel.ChartObjects;
+            var chartObject = charts.Add(10, 10, 800, 600) as
+                Microsoft.Office.Interop.Excel.ChartObject;
+            var chart = chartObject.Chart;
+
+            var dadosGrafico = new object[dadosBackup.GetUpperBound(0) + 1, 2];
+
+            for (int i = 0; i < dadosBackup.GetUpperBound(0); i++)
+            {
+                dadosGrafico[i, 0] = dadosBackup[i, 2]; //Atribui vazão
+                dadosGrafico[i, 1] = dadosBackup[i, 1]; //Atribui cota
+            }
+
+            Range range = worksheet.Cells[3, 2];
+            range = range.Resize[dadosGrafico.GetUpperBound(0), 2];
+            range.Value = dadosGrafico;
+
+            chart.SetSourceData(range);
+
+            // Set chart properties.
+            chart.ChartType = Microsoft.Office.Interop.Excel.XlChartType.xlXYScatter;
+            chart.ChartWizard(Source: range,
+                Title: "Cota X Vazão",
+                CategoryTitle: "Vazão",
+                ValueTitle: "Cotas");
+
+
+            return workbook;
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Geral
+
+        public static void FecharAplicacao(_Workbook workbook)
+        {
+            object misValue = System.Reflection.Missing.Value;
+            workbook.Close(true, misValue, misValue);
+            app.Quit();
+
+            //DesalocarObjeto(workbook.Worksheets);
+            DesalocarObjeto(workbook);
+            DesalocarObjeto(app);
+        }
+
+        private static void DesalocarObjeto(object obj)
+        {
+            try
+            {
+                System.Runtime.InteropServices.Marshal
+                   .ReleaseComObject(obj);
+                obj = null;
+            }
+            catch (Exception ex)
+            {
+                obj = null;
+                Console.WriteLine(@"Exception Occurred while releasing
+    
+                   object " + ex.ToString());
+            }
+            finally
+            {
+                GC.Collect();
+            }
+        }
+
+        #endregion
     }
 }

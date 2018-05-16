@@ -209,9 +209,9 @@ namespace HidrowebWin.Forms
                         planilha = ExcelInteropHelper.CriarAbaCotas(planilha, dadosSerieHistoricaCotas, estacao);
                         planilha = ExcelInteropHelper.CriarAbaVazao(planilha, dadosSerieHistoricaVazao, estacao);
                         planilha = ExcelInteropHelper.CriarCotaVazaoDiaria(planilha, dadosSerieHistoricaCotas, dadosSerieHistoricaVazao, estacao);
-                        //planilha = ExcelInteropHelper.CriarAbaResumoDia(planilha, dadosSerieHistorica, estacao);
-                        //planilha = ExcelInteropHelper.CriarAbaResumoDiasChuva(planilha, dadosSerieHistorica, estacao);
-                        //planilha = ExcelInteropHelper.CriarAbaResumoDiasFalha(planilha, dadosSerieHistorica, estacao);
+                        planilha = ExcelInteropHelper.CriarGraficoCotaTempo(planilha, estacao);
+                        planilha = ExcelInteropHelper.CriarGraficoCotaVazao(planilha, estacao);
+
                         Atividade.Text = $"Salvando planilha.";
 
                         planilha.SaveAs(escolherDiretorio.SelectedPath + $"/{codigo}", Microsoft.Office.Interop.Excel.XlFileFormat.xlOpenXMLWorkbook, null,
