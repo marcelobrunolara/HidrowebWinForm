@@ -866,14 +866,16 @@ namespace HidrowebWin.Forms.ExcelManager
                 Microsoft.Office.Interop.Excel.ChartObject;
             var chart = chartObject.Chart;
 
-            var dadosGrafico = new object[dadosBackup.GetUpperBound(0)+1, 2];
+            var dadosGrafico = new object[dadosBackup.GetUpperBound(0) + 1, 2];
 
-            for (int i=0; i< dadosBackup.GetUpperBound(0); i++)
+            for (int i = 0; i < dadosBackup.GetUpperBound(0); i++)
             {
-                dadosGrafico[i, 0] = dadosBackup[i, 0];
-                dadosGrafico[i, 1] = dadosBackup[i, 1];
+                if (dadosBackup[i, 1]!=null && !string.IsNullOrEmpty(dadosBackup[i,1].ToString()))
+                {
+                    dadosGrafico[i, 0] = dadosBackup[i, 0]; //Atribui vazão
+                    dadosGrafico[i, 1] = dadosBackup[i, 1]; //Atribui cota
+                }
             }
-
 
             Range range = worksheet.Cells[3, 2];
             range = range.Resize[dadosGrafico.GetUpperBound(0), 2];
@@ -882,11 +884,11 @@ namespace HidrowebWin.Forms.ExcelManager
             chart.SetSourceData(range);
 
             // Set chart properties.
-            chart.ChartType = Microsoft.Office.Interop.Excel.XlChartType.xlXYScatter;
+            chart.ChartType = Microsoft.Office.Interop.Excel.XlChartType.xlXYScatterSmooth;
             chart.ChartWizard(Source: range,
                 Title: "Cota X Tempo",
                 CategoryTitle: "Tempo",
-                ValueTitle: "Cotas");
+                ValueTitle: "Cota");
 
 
             return workbook;

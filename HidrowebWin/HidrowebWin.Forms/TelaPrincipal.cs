@@ -47,7 +47,7 @@ namespace HidrowebWin.Forms
                 }
                 Atividade.Text = string.Empty;
             }
-            if (isValid && (string)tipoEstacaoCombo.SelectedItem == "Fluviométrica")
+            else if (isValid && (string)tipoEstacaoCombo.SelectedItem == "Fluviométrica")
             {
                 Atividade.Text = "Buscando estação...";
                 var estacao = await BuscaDadosHelper.BuscarEstacaoFluviometrica(codigoEstacao);
@@ -211,6 +211,7 @@ namespace HidrowebWin.Forms
                         planilha = ExcelInteropHelper.CriarCotaVazaoDiaria(planilha, dadosSerieHistoricaCotas, dadosSerieHistoricaVazao, estacao);
                         planilha = ExcelInteropHelper.CriarGraficoCotaTempo(planilha, estacao);
                         planilha = ExcelInteropHelper.CriarGraficoCotaVazao(planilha, estacao);
+
 
                         Atividade.Text = $"Salvando planilha.";
 

@@ -100,7 +100,7 @@ namespace HidrowebWin.Forms.Data
             estacaoData.Latitude = dataTable.Rows[0].Field<double>("Latitude");
             estacaoData.Longitude = dataTable.Rows[0].Field<double>("Longitude");
             estacaoData.Altitude = dataTable.Rows[0].Field<double>("Altitude");
-            estacaoData.AreaDrenagem = dataTable.Rows[0].Field<string>("AreaDrenagem").ToString();
+            estacaoData.AreaDrenagem = dataTable.Rows[0].Field<Nullable<double>>("AreaDrenagem").ToString() ?? string.Empty;
             estacaoData.Inicio = dataTable.Rows[0].Field<DateTime?>("Inicio");
             estacaoData.Fim = dataTable.Rows[0].Field<DateTime?>("Fim");
             }
@@ -128,7 +128,7 @@ namespace HidrowebWin.Forms.Data
                 estacaoData.Latitude = dataTable.Rows[0].Field<double>("Latitude");
                 estacaoData.Longitude = dataTable.Rows[0].Field<double>("Longitude");
                 estacaoData.Altitude = dataTable.Rows[0].Field<double>("Altitude");
-                estacaoData.AreaDrenagem = dataTable.Rows[0].Field<double>("AreaDrenagem").ToString();
+                estacaoData.AreaDrenagem = dataTable.Rows[0].Field<Nullable<double>>("AreaDrenagem").ToString() ?? string.Empty;
             }
 
             return await Task.FromResult(estacaoData);
